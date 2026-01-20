@@ -14,6 +14,8 @@ interface Target {
   targetCount: number;
   currentCount: number;
   deadline?: Date;
+  startTime?: Date;
+  reminderMinutes?: number; // Notify if count is 0 after this many minutes past startTime
   createdAt: Date;
   status: 'active' | 'completed' | 'archived';
 }
@@ -23,9 +25,15 @@ const db = new Dexie('IslamicCounterDB') as Dexie & {
   targets: EntityTable<Target, 'id'>;
 };
 
+// Schema declaration:
 db.version(1).stores({
   logs: '++id, targetId, dateStr, timestamp',
   targets: '++id, status, deadline'
+});
+
+// Version 2 upgrade for new fields if needed (Dexie handles non-indexed fields automatically, but good practice)
+db.version(2).stores({
+  targets: '++id, status, deadline, startTime'
 });
 
 export type { Log, Target };

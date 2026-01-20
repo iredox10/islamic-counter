@@ -1,8 +1,11 @@
 import { Outlet } from 'react-router-dom';
 import { Navigation } from './Navigation';
 import { Toaster } from 'sonner';
+import { useReminders } from '../hooks/useReminders';
 
 export function Layout() {
+  useReminders(); // Activate background logic
+
   return (
     <div className="min-h-screen bg-islamic-pattern text-slate-100 font-sans selection:text-gold-400">
       

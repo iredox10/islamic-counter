@@ -1,20 +1,49 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { db } from '../lib/db';
 import { format } from 'date-fns';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { RotateCcw, Volume2, VolumeX } from 'lucide-react';
+import { RotateCcw, Volume2, VolumeX, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function Counter() {
-  const [count, setCount] = useState(0);
   const [isRipple, setIsRipple] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
+
+  // Persistence State
+  const [sessionCount, setSessionCount] = useState(() => {
+    const saved = localStorage.getItem('counter-state');
+    return saved ? JSON.parse(saved).count || 0 : 0;
+  });
+
+  const [activeTargetId, setActiveTargetId] = useState<number | null>(() => {
+    const saved = localStorage.getItem('counter-state');
+    return saved ? JSON.parse(saved).targetId || null : null;
+  });
+
+  // Query Active Target if ID exists
+  const activeTarget = useLiveQuery(
+    async () => {
+      if (!activeTargetId) return undefined;
+      return await db.targets.get(activeTargetId);
+    },
+    [activeTargetId]
+  );
   
-  // Progress Ring Logic (e.g., target 100 for a generic "Tasbih" cycle)
-  const cycleTarget = 33; 
-  const progress = (count % cycleTarget) / cycleTarget * 100;
-  
-  // Live query
+  // Persist state on changes
+  useEffect(() => {
+    localStorage.setItem('counter-state', JSON.stringify({
+      count: sessionCount,
+      targetId: activeTargetId
+    }));
+  }, [sessionCount, activeTargetId]);
+
+  // Ring Progress Logic
+  // If Target is active, use Target's counts. If not, use generic 33 cycle.
+  const progressPercent = activeTarget 
+    ? Math.min(100, (activeTarget.currentCount / activeTarget.targetCount) * 100)
+    : (sessionCount % 33) / 33 * 100;
+
+  // Live query for stats
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const todaysLogs = useLiveQuery(() => 
     db.logs.where('dateStr').equals(todayStr).toArray()
@@ -22,22 +51,41 @@ export function Counter() {
   const todayTotal = todaysLogs?.reduce((acc, log) => acc + log.count, 0) || 0;
 
   const handleTap = async () => {
-    if (navigator.vibrate) navigator.vibrate(15); // Lighter, sharper vibration
+    if (navigator.vibrate) navigator.vibrate(15);
     
     setIsRipple(true);
     setTimeout(() => setIsRipple(false), 400);
 
-    setCount(c => c + 1);
+    // Update Session Visual
+    setSessionCount((c: number) => c + 1);
 
-    db.logs.add({
+    // DB Updates
+    await db.logs.add({
       count: 1,
       timestamp: new Date(),
-      dateStr: todayStr
-    }).catch(console.error);
+      dateStr: todayStr,
+      targetId: activeTargetId || undefined
+    });
+
+    // Update Target if active
+    if (activeTargetId && activeTarget) {
+      await db.targets.update(activeTargetId, {
+        currentCount: (activeTarget.currentCount || 0) + 1
+      });
+    }
   };
 
   const handleResetSession = () => {
-    if (confirm('Start a new session?')) setCount(0);
+    if (confirm('Reset this session?')) {
+      setSessionCount(0);
+    }
+  };
+
+  const clearActiveTarget = () => {
+    if (confirm('Stop tracking this goal?')) {
+      setActiveTargetId(null);
+      setSessionCount(0); // Reset visual counter to 0 for a fresh session
+    }
   };
 
   return (
@@ -57,6 +105,26 @@ export function Counter() {
           {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
         </button>
       </div>
+
+      {/* Target Indicator Pill (If Active) */}
+      <AnimatePresence>
+        {activeTarget && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="absolute top-28 bg-gold-500/10 border border-gold-500/20 px-4 py-2 rounded-full flex items-center gap-3 backdrop-blur-md z-10"
+          >
+             <div className="flex flex-col">
+                <span className="text-[10px] uppercase tracking-wider text-gold-400 font-bold">Target Active</span>
+                <span className="text-sm font-serif text-slate-100">{activeTarget.title}</span>
+             </div>
+             <button onClick={clearActiveTarget} className="text-slate-400 hover:text-white ml-2">
+                <XCircle size={18} />
+             </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Main Counter Area */}
       <div className="flex-1 flex flex-col justify-center items-center -mt-16 w-full">
@@ -79,7 +147,7 @@ export function Counter() {
                  className="text-gold-500 transition-all duration-300 ease-out shadow-[0_0_10px_rgba(212,175,55,0.5)]" 
                  strokeWidth="2"
                  strokeDasharray="301.59"
-                 strokeDashoffset={301.59 - (301.59 * progress) / 100}
+                 strokeDashoffset={301.59 - (301.59 * progressPercent) / 100}
                  strokeLinecap="round"
                />
              </svg>
@@ -109,21 +177,35 @@ export function Counter() {
               )}
             </AnimatePresence>
 
-            <span className="font-serif text-8xl text-gold-400 drop-shadow-2xl select-none tabular-nums tracking-tighter">
-              {count}
-            </span>
+            {/* Display Logic: If target, show progress/total. If not, show session count. */}
+            <div className="flex flex-col items-center">
+               <span className="font-serif text-8xl text-gold-400 drop-shadow-2xl select-none tabular-nums tracking-tighter">
+                  {sessionCount}
+               </span>
+            </div>
+
             <span className="text-slate-500 text-xs tracking-[0.3em] font-medium uppercase mt-2 group-hover:text-gold-500/50 transition-colors">
               Tasbih
             </span>
           </button>
         </div>
 
-        {/* Cycle Indicator */}
-        <div className="mt-12 text-center space-y-2 opacity-60">
+        {/* Indicator */}
+        <div className="mt-12 text-center space-y-2 opacity-60 h-10">
            <div className="flex items-center gap-2 justify-center text-xs tracking-widest uppercase text-slate-400">
-             <span>Cycle</span>
-             <span className="w-12 h-[1px] bg-slate-700"></span>
-             <span className="text-gold-500">{count % cycleTarget} / {cycleTarget}</span>
+             {activeTarget ? (
+                <>
+                   <span>Goal Progress</span>
+                   <span className="w-12 h-[1px] bg-slate-700"></span>
+                   <span className="text-gold-500">{activeTarget.currentCount} / {activeTarget.targetCount}</span>
+                </>
+             ) : (
+                <>
+                   <span>Cycle</span>
+                   <span className="w-12 h-[1px] bg-slate-700"></span>
+                   <span className="text-gold-500">{sessionCount % 33} / 33</span>
+                </>
+             )}
            </div>
         </div>
 
