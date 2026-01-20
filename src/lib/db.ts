@@ -15,7 +15,17 @@ interface Target {
   currentCount: number;
   deadline?: Date;
   startTime?: Date;
-  reminderMinutes?: number; // Notify if count is 0 after this many minutes past startTime
+  
+  // Reminder Settings
+  reminderType?: 'one-off' | 'recurring';
+  reminderGap?: number; // Minutes late (for one-off)
+  
+  // Recurring Settings
+  frequency?: 'daily' | 'weekly';
+  reminderTime?: string; // "14:30"
+  reminderDays?: number[]; // [0-6] where 0 is Sunday
+  
+  lastNotified?: Date;
   createdAt: Date;
   status: 'active' | 'completed' | 'archived';
 }
@@ -31,9 +41,12 @@ db.version(1).stores({
   targets: '++id, status, deadline'
 });
 
-// Version 2 upgrade for new fields if needed (Dexie handles non-indexed fields automatically, but good practice)
 db.version(2).stores({
   targets: '++id, status, deadline, startTime'
+});
+
+db.version(3).stores({
+  targets: '++id, status, deadline, startTime, reminderType, frequency'
 });
 
 export type { Log, Target };

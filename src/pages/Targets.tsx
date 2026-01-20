@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Target } from '../lib/db';
-import { Plus, Trash2, Trophy, PlayCircle, Clock, Bell } from 'lucide-react';
-import { differenceInDays, format } from 'date-fns';
+import { Plus, Trash2, Trophy, PlayCircle, Clock, Repeat } from 'lucide-react';
+import { differenceInDays } from 'date-fns';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -17,32 +17,60 @@ export function Targets() {
   const [targetCount, setTargetCount] = useState('');
   const [startTime, setStartTime] = useState('');
   const [deadline, setDeadline] = useState('');
-  const [reminderGap, setReminderGap] = useState('');
+  
+  // New Reminder State
+  const [reminderType, setReminderType] = useState<'one-off' | 'recurring'>('one-off');
+  const [reminderGap, setReminderGap] = useState(''); // "15"
+  const [frequency, setFrequency] = useState<'daily' | 'weekly'>('daily');
+  const [reminderTime, setReminderTime] = useState(''); // "14:00"
+  const [selectedDays, setSelectedDays] = useState<number[]>([]); // [1, 3]
+
+  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  const toggleDay = (index: number) => {
+    if (selectedDays.includes(index)) {
+      setSelectedDays(selectedDays.filter(d => d !== index));
+    } else {
+      setSelectedDays([...selectedDays, index]);
+    }
+  };
 
   const handleAddTarget = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !targetCount) return;
 
-    await db.targets.add({
+    const payload: any = {
       title,
       targetCount: parseInt(targetCount),
       currentCount: 0,
-      startTime: startTime ? new Date(startTime) : new Date(),
       deadline: deadline ? new Date(deadline) : undefined,
-      reminderMinutes: reminderGap ? parseInt(reminderGap) : undefined,
       createdAt: new Date(),
-      status: 'active'
-    });
+      status: 'active',
+      reminderType
+    };
+
+    // Logic for payload based on reminder type
+    if (reminderType === 'one-off') {
+       payload.startTime = new Date(); // Start "now"
+       payload.reminderGap = reminderGap ? parseInt(reminderGap) : undefined;
+    } else {
+       // Recurring
+       payload.frequency = frequency;
+       payload.reminderTime = reminderTime;
+       payload.reminderDays = frequency === 'weekly' ? selectedDays : undefined;
+    }
+
+    await db.targets.add(payload);
 
     // Reset
     setTitle('');
     setTargetCount('');
-    setStartTime('');
     setDeadline('');
     setReminderGap('');
+    setReminderTime('');
+    setSelectedDays([]);
     setShowAddForm(false);
     
-    // Request permission if not granted yet
     if (Notification.permission === 'default') {
       Notification.requestPermission();
     }
@@ -104,39 +132,103 @@ export function Targets() {
                 placeholder="Count"
                 value={targetCount}
                 onChange={e => setTargetCount(e.target.value)}
-                className="w-1/2 bg-slate-950/50 border border-slate-700/50 rounded-xl p-3 text-white placeholder-slate-500 focus:border-gold-500/50 outline-none transition-colors"
-              />
-              <select
-                value={reminderGap}
-                onChange={e => setReminderGap(e.target.value)}
-                className="w-1/2 bg-slate-950/50 border border-slate-700/50 rounded-xl p-3 text-slate-300 focus:border-gold-500/50 outline-none transition-colors text-sm"
-              >
-                <option value="">No Reminder</option>
-                <option value="15">15 mins late</option>
-                <option value="30">30 mins late</option>
-                <option value="60">1 hour late</option>
-                <option value="120">2 hours late</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] uppercase text-slate-500 font-bold tracking-wider ml-1">Start Time</label>
-              <input
-                type="datetime-local"
-                value={startTime}
-                onChange={e => setStartTime(e.target.value)}
-                className="w-full bg-slate-950/50 border border-slate-700/50 rounded-xl p-3 text-white focus:border-gold-500/50 outline-none transition-colors text-sm"
+                className="w-full bg-slate-950/50 border border-slate-700/50 rounded-xl p-3 text-white placeholder-slate-500 focus:border-gold-500/50 outline-none transition-colors"
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] uppercase text-slate-500 font-bold tracking-wider ml-1">Deadline (Optional)</label>
-              <input
-                type="datetime-local"
-                value={deadline}
-                onChange={e => setDeadline(e.target.value)}
-                className="w-full bg-slate-950/50 border border-slate-700/50 rounded-xl p-3 text-white focus:border-gold-500/50 outline-none transition-colors text-sm"
-              />
+            {/* Reminder Section */}
+            <div className="bg-slate-950/30 p-3 rounded-xl space-y-3">
+              <div className="flex items-center gap-4 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <button
+                  type="button"
+                  onClick={() => setReminderType('one-off')}
+                  className={cn("flex items-center gap-1 transition-colors", reminderType === 'one-off' ? "text-gold-400" : "")}
+                >
+                  <Clock size={14} /> One-Time
+                </button>
+                <button
+                   type="button"
+                   onClick={() => setReminderType('recurring')}
+                   className={cn("flex items-center gap-1 transition-colors", reminderType === 'recurring' ? "text-gold-400" : "")}
+                >
+                  <Repeat size={14} /> Recurring
+                </button>
+              </div>
+
+              {reminderType === 'one-off' ? (
+                <div className="space-y-3 animate-in fade-in">
+                   <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[10px] uppercase text-slate-500 font-bold ml-1">Start Time</label>
+                        <input
+                          type="datetime-local"
+                          value={startTime}
+                          onChange={e => setStartTime(e.target.value)}
+                          className="w-full bg-slate-900 border border-slate-700/50 rounded-lg p-2 text-white text-xs outline-none"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] uppercase text-slate-500 font-bold ml-1">Deadline</label>
+                        <input
+                          type="datetime-local"
+                          value={deadline}
+                          onChange={e => setDeadline(e.target.value)}
+                          className="w-full bg-slate-900 border border-slate-700/50 rounded-lg p-2 text-white text-xs outline-none"
+                        />
+                      </div>
+                   </div>
+
+                   <select
+                    value={reminderGap}
+                    onChange={e => setReminderGap(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700/50 rounded-lg p-2 text-slate-300 focus:border-gold-500/50 outline-none text-sm"
+                   >
+                    <option value="">No Reminder</option>
+                    <option value="15">Remind if 15 mins late</option>
+                    <option value="30">Remind if 30 mins late</option>
+                    <option value="60">Remind if 1 hour late</option>
+                  </select>
+                </div>
+              ) : (
+                <div className="space-y-3 animate-in fade-in">
+                  <div className="flex gap-2">
+                    <select
+                      value={frequency}
+                      onChange={e => setFrequency(e.target.value as any)}
+                      className="w-1/2 bg-slate-900 border border-slate-700/50 rounded-lg p-2 text-slate-300 text-sm outline-none"
+                    >
+                      <option value="daily">Daily</option>
+                      <option value="weekly">Weekly</option>
+                    </select>
+                    <input
+                      type="time"
+                      value={reminderTime}
+                      onChange={e => setReminderTime(e.target.value)}
+                      className="w-1/2 bg-slate-900 border border-slate-700/50 rounded-lg p-2 text-white text-sm outline-none"
+                    />
+                  </div>
+                  
+                  {frequency === 'weekly' && (
+                    <div className="flex justify-between">
+                      {weekDays.map((day, i) => (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() => toggleDay(i)}
+                          className={cn(
+                            "w-8 h-8 rounded-full text-[10px] font-bold transition-all",
+                            selectedDays.includes(i) 
+                              ? "bg-gold-500 text-midnight-950" 
+                              : "bg-slate-800 text-slate-500 hover:bg-slate-700"
+                          )}
+                        >
+                          {day.charAt(0)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <button type="submit" className="w-full bg-gradient-to-r from-gold-500 to-gold-600 text-midnight-950 font-bold py-3 rounded-xl hover:shadow-lg hover:shadow-gold-500/20 transition-all mt-2">
@@ -187,16 +279,18 @@ function TargetCard({ target, onDelete }: { target: Target; onDelete: (e: React.
           </div>
           <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 mt-2 font-medium tracking-wide">
             <span className="bg-slate-800/50 px-2 py-1 rounded-md border border-white/5">
-              {target.targetCount.toLocaleString()} Target
+              {target.targetCount.toLocaleString()}
             </span>
             {target.deadline && (
               <span className={cn("flex items-center gap-1", daysLeft && daysLeft < 3 ? "text-red-400" : "")}>
                 <Clock size={10} /> {daysLeft} days left
               </span>
             )}
-            {target.startTime && (
-               <span className="flex items-center gap-1 text-slate-500">
-                 Start: {format(target.startTime, 'MMM d, HH:mm')}
+            
+            {/* Reminder Badge */}
+            {target.reminderType === 'recurring' && (
+               <span className="flex items-center gap-1 text-gold-500/80 bg-gold-500/10 px-2 py-0.5 rounded-full">
+                 <Repeat size={10} /> {target.frequency === 'daily' ? 'Daily' : 'Weekly'} {target.reminderTime}
                </span>
             )}
           </div>
@@ -217,13 +311,6 @@ function TargetCard({ target, onDelete }: { target: Target; onDelete: (e: React.
         <span>{target.currentCount.toLocaleString()} done</span>
         <span>{progress}%</span>
       </div>
-      
-      {/* Reminder Indicator */}
-      {target.reminderMinutes && (
-        <div className="absolute top-2 right-2 opacity-10">
-          <Bell size={40} />
-        </div>
-      )}
     </div>
   );
 }
