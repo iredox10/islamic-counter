@@ -75,9 +75,17 @@ export function Counter() {
     }
   };
 
-  const handleResetSession = () => {
+  const handleResetSession = async () => {
     if (confirm('Reset this session?')) {
       setSessionCount(0);
+      
+      // If there is an active target, we must also reset its progress in the DB
+      // so the ring (which depends on target.currentCount) resets too.
+      if (activeTargetId) {
+        await db.targets.update(activeTargetId, {
+          currentCount: 0
+        });
+      }
     }
   };
 
