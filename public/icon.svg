@@ -1,0 +1,31 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="100" y1="100" x2="400" y2="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fcd34d"/>
+      <stop offset="1" stop-color="#d97706"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <circle cx="256" cy="256" r="256" fill="url(#bg)"/>
+  
+  <!-- Inner Ring -->
+  <circle cx="256" cy="256" r="240" stroke="url(#gold)" stroke-width="4" opacity="0.3"/>
+  
+  <!-- Crescent Moon -->
+  <path d="M360 256C360 322.274 306.274 376 240 376C173.726 376 120 322.274 120 256C120 189.726 173.726 136 240 136C247.5 136 254.8 136.7 261.9 138C228 148 200 180 200 220C200 275.228 244.772 320 300 320C325 320 348 308 360 290C360 270 360 256 360 256Z" fill="url(#gold)" filter="url(#glow)"/>
+  
+  <!-- Tasbih Beads (Floating) -->
+  <circle cx="340" cy="180" r="24" fill="url(#gold)"/>
+  <circle cx="380" cy="130" r="18" fill="url(#gold)" opacity="0.8"/>
+  <circle cx="290" cy="120" r="12" fill="url(#gold)" opacity="0.6"/>
+
+</svg>
