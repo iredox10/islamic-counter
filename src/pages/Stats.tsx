@@ -25,11 +25,19 @@ type ChartData = {
 
 export function Stats() {
   const [timeRange, setTimeRange] = useState<TimeRange>('daily');
+  const [selectedTargetId, setSelectedTargetId] = useState<number | 'all'>('all');
+  
   const logs = useLiveQuery(() => db.logs.toArray());
+  const targets = useLiveQuery(() => db.targets.toArray());
 
   // --- Data Processing Logic ---
   const processData = (): ChartData[] => {
     if (!logs) return [];
+
+    // Filter logs first based on selected target
+    const filteredLogs = selectedTargetId === 'all' 
+      ? logs 
+      : logs.filter(l => l.targetId === selectedTargetId);
 
     const now = new Date();
     let data: ChartData[] = [];
@@ -39,7 +47,7 @@ export function Stats() {
       data = Array.from({ length: 7 }).map((_, i) => {
         const date = subDays(now, 6 - i);
         const dateStr = format(date, 'yyyy-MM-dd');
-        const count = logs.filter(l => l.dateStr === dateStr).reduce((acc, l) => acc + l.count, 0);
+        const count = filteredLogs.filter(l => l.dateStr === dateStr).reduce((acc, l) => acc + l.count, 0);
         return {
           name: format(date, 'EEE'), // Mon
           fullDate: dateStr,
@@ -52,7 +60,7 @@ export function Stats() {
       data = Array.from({ length: 8 }).map((_, i) => {
         const date = subWeeks(now, 7 - i);
         // Filter logs that fall in this week
-        const count = logs.filter(l => isSameWeek(l.timestamp, date, { weekStartsOn: 1 })).reduce((acc, l) => acc + l.count, 0);
+        const count = filteredLogs.filter(l => isSameWeek(l.timestamp, date, { weekStartsOn: 1 })).reduce((acc, l) => acc + l.count, 0);
         return {
           name: `W${format(date, 'w')}`, // W42
           fullDate: format(date, 'MMM d'),
@@ -64,7 +72,7 @@ export function Stats() {
       // Last 6 Months
       data = Array.from({ length: 6 }).map((_, i) => {
         const date = subMonths(now, 5 - i);
-        const count = logs.filter(l => isSameMonth(l.timestamp, date)).reduce((acc, l) => acc + l.count, 0);
+        const count = filteredLogs.filter(l => isSameMonth(l.timestamp, date)).reduce((acc, l) => acc + l.count, 0);
         return {
           name: format(date, 'MMM'), // Jan
           fullDate: format(date, 'MMMM yyyy'),
@@ -76,7 +84,7 @@ export function Stats() {
       // Last 3 Years (including current)
       data = Array.from({ length: 3 }).map((_, i) => {
         const date = subYears(now, 2 - i);
-        const count = logs.filter(l => isSameYear(l.timestamp, date)).reduce((acc, l) => acc + l.count, 0);
+        const count = filteredLogs.filter(l => isSameYear(l.timestamp, date)).reduce((acc, l) => acc + l.count, 0);
         return {
           name: format(date, 'yyyy'), // 2024
           fullDate: format(date, 'yyyy'),
@@ -89,19 +97,39 @@ export function Stats() {
   };
 
   const data = processData();
-  const totalLifetime = logs?.reduce((acc, l) => acc + l.count, 0) || 0;
   
-  // Quick Best Day Logic
-  const bestDayCount = logs ? Math.max(0, ...Object.values(logs.reduce((acc: any, l) => {
+  // Calculate totals based on filtered view
+  const filteredLogs = selectedTargetId === 'all' 
+      ? (logs || [])
+      : (logs || []).filter(l => l.targetId === selectedTargetId);
+
+  const totalLifetime = filteredLogs.reduce((acc, l) => acc + l.count, 0);
+  
+  // Quick Best Day Logic (Filtered)
+  const bestDayCount = filteredLogs.length > 0 ? Math.max(0, ...Object.values(filteredLogs.reduce((acc: any, l) => {
     acc[l.dateStr] = (acc[l.dateStr] || 0) + l.count;
     return acc;
   }, {}) as Record<string, number>)) : 0;
 
   return (
     <div className="px-6 py-8 space-y-8 pb-32">
-      <header>
-        <h1 className="font-serif text-3xl text-slate-100">Progress</h1>
-        <p className="text-slate-400 text-sm mt-1">Analytics & Insights</p>
+      <header className="flex justify-between items-start">
+        <div>
+          <h1 className="font-serif text-3xl text-slate-100">Progress</h1>
+          <p className="text-slate-400 text-sm mt-1">Analytics & Insights</p>
+        </div>
+        
+        {/* Zikr Filter Dropdown */}
+        <select
+          value={selectedTargetId}
+          onChange={(e) => setSelectedTargetId(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+          className="bg-slate-900/80 border border-gold-500/20 rounded-lg text-xs p-2 text-gold-400 focus:outline-none focus:ring-1 focus:ring-gold-500 max-w-[120px] truncate"
+        >
+          <option value="all">All Goals</option>
+          {targets?.map(t => (
+            <option key={t.id} value={t.id}>{t.title}</option>
+          ))}
+        </select>
       </header>
 
       {/* Summary Cards */}
