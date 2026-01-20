@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { Navigation } from './Navigation';
 import { Toaster } from 'sonner';
 import { useReminders } from '../hooks/useReminders';
+import { InstallBanner } from './InstallBanner';
 
 export function Layout() {
   useReminders(); // Activate background logic
@@ -20,6 +21,7 @@ export function Layout() {
         <Outlet />
       </main>
       
+      <InstallBanner />
       <Navigation />
       <Toaster position="top-center" theme="dark" />
     </div>
