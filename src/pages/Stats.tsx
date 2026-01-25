@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../lib/db';
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
+import { Plus, X } from 'lucide-react';
 import { 
   subDays, 
   format, 
@@ -13,7 +14,7 @@ import {
   isSameYear 
 } from 'date-fns';
 import { cn } from '../lib/utils';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type TimeRange = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
@@ -26,9 +27,46 @@ type ChartData = {
 export function Stats() {
   const [timeRange, setTimeRange] = useState<TimeRange>('daily');
   const [selectedTargetId, setSelectedTargetId] = useState<number | 'all'>('all');
+  const [showManualEntry, setShowManualEntry] = useState(false);
   
   const logs = useLiveQuery(() => db.logs.toArray());
   const targets = useLiveQuery(() => db.targets.toArray());
+
+  // Manual Entry State
+  const [manualCount, setManualCount] = useState('');
+  const [manualDate, setManualDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [manualTargetId, setManualTargetId] = useState<string>('');
+
+  const handleManualSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualCount) return;
+
+    const count = parseInt(manualCount);
+    const date = new Date(manualDate);
+    
+    // Add log
+    await db.logs.add({
+      count,
+      timestamp: date,
+      dateStr: manualDate,
+      targetId: manualTargetId ? parseInt(manualTargetId) : undefined
+    });
+
+    // Update target if selected
+    if (manualTargetId) {
+      const target = await db.targets.get(parseInt(manualTargetId));
+      if (target) {
+        await db.targets.update(target.id!, {
+          currentCount: (target.currentCount || 0) + count
+        });
+      }
+    }
+
+    // Reset & Close
+    setManualCount('');
+    setManualTargetId('');
+    setShowManualEntry(false);
+  };
 
   // --- Data Processing Logic ---
   const processData = (): ChartData[] => {
@@ -119,18 +157,91 @@ export function Stats() {
           <p className="text-slate-400 text-sm mt-1">Analytics & Insights</p>
         </div>
         
-        {/* Zikr Filter Dropdown */}
-        <select
-          value={selectedTargetId}
-          onChange={(e) => setSelectedTargetId(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-          className="bg-slate-900/80 border border-gold-500/20 rounded-lg text-xs p-2 text-gold-400 focus:outline-none focus:ring-1 focus:ring-gold-500 max-w-[120px] truncate"
-        >
-          <option value="all">All Goals</option>
-          {targets?.map(t => (
-            <option key={t.id} value={t.id}>{t.title}</option>
-          ))}
-        </select>
+        <div className="flex gap-2">
+          {/* Manual Add Button */}
+          <button
+            onClick={() => setShowManualEntry(true)}
+            className="bg-slate-800 p-2 rounded-lg text-gold-400 hover:bg-slate-700 transition-colors border border-white/5"
+          >
+            <Plus size={20} />
+          </button>
+
+          {/* Zikr Filter Dropdown */}
+          <select
+            value={selectedTargetId}
+            onChange={(e) => setSelectedTargetId(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+            className="bg-slate-900/80 border border-gold-500/20 rounded-lg text-xs p-2 text-gold-400 focus:outline-none focus:ring-1 focus:ring-gold-500 max-w-[120px] truncate"
+          >
+            <option value="all">All Goals</option>
+            {targets?.map(t => (
+              <option key={t.id} value={t.id}>{t.title}</option>
+            ))}
+          </select>
+        </div>
       </header>
+
+      {/* Manual Entry Modal */}
+      <AnimatePresence>
+        {showManualEntry && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              className="bg-midnight-900 border border-gold-500/20 w-full max-w-sm rounded-2xl p-6 shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-serif text-xl text-slate-100">Log Offline Dhikr</h3>
+                <button onClick={() => setShowManualEntry(false)} className="text-slate-500 hover:text-white">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleManualSubmit} className="space-y-4">
+                <div>
+                  <label className="text-xs uppercase text-slate-500 font-bold ml-1">Count</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 100"
+                    value={manualCount}
+                    onChange={e => setManualCount(e.target.value)}
+                    className="w-full bg-slate-950/50 border border-slate-700/50 rounded-xl p-3 text-white text-lg focus:border-gold-500/50 outline-none"
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs uppercase text-slate-500 font-bold ml-1">Assign to Goal (Optional)</label>
+                  <select
+                    value={manualTargetId}
+                    onChange={e => setManualTargetId(e.target.value)}
+                    className="w-full bg-slate-950/50 border border-slate-700/50 rounded-xl p-3 text-slate-300 focus:border-gold-500/50 outline-none"
+                  >
+                    <option value="">General (No Goal)</option>
+                    {targets?.filter(t => t.status === 'active').map(t => (
+                      <option key={t.id} value={t.id}>{t.title}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs uppercase text-slate-500 font-bold ml-1">Date</label>
+                  <input
+                    type="date"
+                    value={manualDate}
+                    onChange={e => setManualDate(e.target.value)}
+                    className="w-full bg-slate-950/50 border border-slate-700/50 rounded-xl p-3 text-white focus:border-gold-500/50 outline-none"
+                  />
+                </div>
+
+                <button type="submit" className="w-full bg-gold-500 text-midnight-950 font-bold py-3 rounded-xl hover:bg-gold-400 transition-colors mt-2">
+                  Add to History
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-4">

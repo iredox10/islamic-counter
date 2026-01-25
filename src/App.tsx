@@ -3,6 +3,7 @@ import { Layout } from './components/Layout';
 import { Counter } from './components/Counter';
 import { Targets } from './pages/Targets';
 import { Stats } from './pages/Stats';
+import { Settings } from './pages/Settings';
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
           <Route path="/" element={<Counter />} />
           <Route path="/targets" element={<Targets />} />
           <Route path="/stats" element={<Stats />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
       </Routes>
     </BrowserRouter>

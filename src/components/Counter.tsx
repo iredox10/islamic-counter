@@ -4,10 +4,20 @@ import { format } from 'date-fns';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { RotateCcw, Volume2, VolumeX, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSound } from '../hooks/useSound';
 
 export function Counter() {
   const [isRipple, setIsRipple] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(false);
+  const { playClick } = useSound();
+  
+  // Persist Sound Setting
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    return localStorage.getItem('sound-enabled') === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('sound-enabled', String(soundEnabled));
+  }, [soundEnabled]);
 
   // Persistence State
   const [sessionCount, setSessionCount] = useState(() => {
@@ -52,6 +62,7 @@ export function Counter() {
 
   const handleTap = async () => {
     if (navigator.vibrate) navigator.vibrate(15);
+    if (soundEnabled) playClick();
     
     setIsRipple(true);
     setTimeout(() => setIsRipple(false), 400);

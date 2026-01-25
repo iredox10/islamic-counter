@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Target, BarChart2 } from 'lucide-react';
+import { Home, Target, BarChart2, Settings } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion } from 'framer-motion';
 
@@ -10,11 +10,12 @@ export function Navigation() {
     { path: '/', icon: Home, label: 'Tasbih' },
     { path: '/targets', icon: Target, label: 'Goals' },
     { path: '/stats', icon: BarChart2, label: 'Progress' },
+    { path: '/settings', icon: Settings, label: 'Settings' },
   ];
 
   return (
     <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
-      <nav className="glass-panel rounded-full px-6 py-3 flex items-center gap-8 pointer-events-auto shadow-2xl shadow-black/50">
+      <nav className="glass-panel rounded-full px-6 py-3 flex items-center gap-6 pointer-events-auto shadow-2xl shadow-black/50">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (

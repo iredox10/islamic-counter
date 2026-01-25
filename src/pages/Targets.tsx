@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Target } from '../lib/db';
 import { Plus, Trash2, Trophy, PlayCircle, Clock, Repeat } from 'lucide-react';
-import { differenceInDays } from 'date-fns';
+import { differenceInDays, format } from 'date-fns';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { ADHKAR_PRESETS } from '../lib/adhkar';
 
 export function Targets() {
   const navigate = useNavigate();
@@ -117,6 +118,23 @@ export function Targets() {
           >
             <h3 className="text-gold-400 text-xs uppercase tracking-widest font-bold mb-2">New Goal</h3>
             
+            {/* Quick Presets */}
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 no-scrollbar">
+              {ADHKAR_PRESETS.map((adhkar) => (
+                <button
+                  key={adhkar.title}
+                  type="button"
+                  onClick={() => {
+                    setTitle(adhkar.title);
+                    setTargetCount(adhkar.target.toString());
+                  }}
+                  className="whitespace-nowrap bg-slate-800 text-slate-300 text-[10px] px-3 py-1 rounded-full border border-white/5 hover:bg-slate-700 hover:text-white transition-colors"
+                >
+                  {adhkar.title}
+                </button>
+              ))}
+            </div>
+
             <input
               type="text"
               placeholder="Goal Title (e.g. 1000 Salawat)"
