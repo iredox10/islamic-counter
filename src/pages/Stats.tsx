@@ -31,6 +31,7 @@ export function Stats() {
   
   const logs = useLiveQuery(() => db.logs.toArray());
   const targets = useLiveQuery(() => db.targets.toArray());
+  const durations = useLiveQuery(() => db.durations.toArray());
 
   // Manual Entry State
   const [manualCount, setManualCount] = useState('');
@@ -143,6 +144,21 @@ export function Stats() {
 
   const totalLifetime = filteredLogs.reduce((acc, l) => acc + l.count, 0);
   
+  // Calculate Time Spent
+  const filteredDurations = selectedTargetId === 'all'
+    ? (durations || [])
+    : (durations || []).filter(d => d.targetId === selectedTargetId);
+    
+  const totalSeconds = filteredDurations.reduce((acc, d) => acc + d.seconds, 0);
+  
+  const formatDuration = (secs: number) => {
+    if (secs < 60) return `${secs}s`;
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m`;
+  };
+  
   // Quick Best Day Logic (Filtered)
   const bestDayCount = filteredLogs.length > 0 ? Math.max(0, ...Object.values(filteredLogs.reduce((acc: any, l) => {
     acc[l.dateStr] = (acc[l.dateStr] || 0) + l.count;
@@ -244,9 +260,10 @@ export function Stats() {
       </AnimatePresence>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-4">
-        <StatCard title="Lifetime" value={totalLifetime} />
-        <StatCard title="Best Day" value={bestDayCount} />
+      <div className="grid grid-cols-3 gap-3">
+        <StatCard title="Lifetime" value={totalLifetime.toLocaleString()} />
+        <StatCard title="Time Spent" value={formatDuration(totalSeconds)} />
+        <StatCard title="Best Day" value={bestDayCount.toLocaleString()} />
       </div>
 
       {/* Filter Tabs */}
@@ -325,15 +342,15 @@ export function Stats() {
   );
 }
 
-function StatCard({ title, value }: { title: string, value: number }) {
+function StatCard({ title, value }: { title: string, value: string }) {
   return (
-    <div className="glass-card p-5 rounded-2xl relative overflow-hidden group">
+    <div className="glass-card p-4 rounded-2xl relative overflow-hidden group flex flex-col justify-center h-24">
       <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-        <div className="w-16 h-16 bg-gold-500 rounded-full blur-xl" />
+        <div className="w-12 h-12 bg-gold-500 rounded-full blur-xl" />
       </div>
-      <p className="text-slate-500 text-[10px] uppercase tracking-widest font-bold mb-1">{title}</p>
-      <p className="text-3xl font-serif text-slate-100 group-hover:text-gold-400 transition-colors">
-        {value.toLocaleString()}
+      <p className="text-slate-500 text-[10px] uppercase tracking-widest font-bold mb-1 truncate">{title}</p>
+      <p className="text-2xl font-serif text-slate-100 group-hover:text-gold-400 transition-colors truncate">
+        {value}
       </p>
     </div>
   );

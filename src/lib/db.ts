@@ -30,9 +30,17 @@ interface Target {
   status: 'active' | 'completed' | 'archived';
 }
 
+interface Duration {
+  id?: number;
+  dateStr: string;
+  targetId?: number;
+  seconds: number;
+}
+
 const db = new Dexie('IslamicCounterDB') as Dexie & {
   logs: EntityTable<Log, 'id'>;
   targets: EntityTable<Target, 'id'>;
+  durations: EntityTable<Duration, 'id'>;
 };
 
 // Schema declaration:
@@ -49,5 +57,9 @@ db.version(3).stores({
   targets: '++id, status, deadline, startTime, reminderType, frequency'
 });
 
-export type { Log, Target };
+db.version(4).stores({
+  durations: '++id, [dateStr+targetId]' // Compound index for fast lookups
+});
+
+export type { Log, Target, Duration };
 export { db };

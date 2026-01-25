@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { db } from '../lib/db';
 import { format } from 'date-fns';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -10,16 +10,12 @@ export function Counter() {
   const [isRipple, setIsRipple] = useState(false);
   const { playClick } = useSound();
   
-  // Persist Sound Setting
-  const [soundEnabled, setSoundEnabled] = useState(() => {
-    return localStorage.getItem('sound-enabled') === 'true';
-  });
+  // Timer State
+  const [isActive, setIsActive] = useState(false);
+  const idleTimeoutRef = useRef<any>(null);
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
 
-  useEffect(() => {
-    localStorage.setItem('sound-enabled', String(soundEnabled));
-  }, [soundEnabled]);
-
-  // Persistence State
+  // Persistence State must be declared BEFORE useEffects that use it
   const [sessionCount, setSessionCount] = useState(() => {
     const saved = localStorage.getItem('counter-state');
     return saved ? JSON.parse(saved).count || 0 : 0;
@@ -29,6 +25,39 @@ export function Counter() {
     const saved = localStorage.getItem('counter-state');
     return saved ? JSON.parse(saved).targetId || null : null;
   });
+
+  // Persist Sound Setting
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    return localStorage.getItem('sound-enabled') === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('sound-enabled', String(soundEnabled));
+  }, [soundEnabled]);
+
+  // Timer Logic
+  useEffect(() => {
+    let interval: any;
+    
+    if (isActive) {
+      interval = setInterval(async () => {
+        const activeId = activeTargetId || 0; // 0 for general
+        
+        try {
+          const existing = await db.durations.where({ dateStr: todayStr, targetId: activeId }).first();
+          if (existing) {
+            await db.durations.update(existing.id!, { seconds: existing.seconds + 1 });
+          } else {
+            await db.durations.add({ dateStr: todayStr, targetId: activeId, seconds: 1 });
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }, 1000);
+    }
+
+    return () => clearInterval(interval);
+  }, [isActive, activeTargetId, todayStr]);
 
   // Query Active Target if ID exists
   const activeTarget = useLiveQuery(
@@ -54,7 +83,6 @@ export function Counter() {
     : (sessionCount % 33) / 33 * 100;
 
   // Live query for stats
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
   const todaysLogs = useLiveQuery(() => 
     db.logs.where('dateStr').equals(todayStr).toArray()
   );
@@ -66,6 +94,15 @@ export function Counter() {
     
     setIsRipple(true);
     setTimeout(() => setIsRipple(false), 400);
+
+    // Timer Logic
+    if (!isActive) setIsActive(true);
+    
+    // Reset Idle Timer (60s)
+    if (idleTimeoutRef.current) clearTimeout(idleTimeoutRef.current);
+    idleTimeoutRef.current = setTimeout(() => {
+      setIsActive(false);
+    }, 60000);
 
     // Update Session Visual
     setSessionCount((c: number) => c + 1);
