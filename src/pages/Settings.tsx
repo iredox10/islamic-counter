@@ -1,6 +1,8 @@
 import { db } from '../lib/db';
-import { Download, Upload, Trash2, CheckCircle2 } from 'lucide-react';
+import { Download, Upload, Trash2, CheckCircle2, Sun, Moon, Monitor } from 'lucide-react';
 import { useState } from 'react';
+import { useTheme, type Theme } from '../lib/ThemeContext';
+import { cn } from '../lib/utils';
 
 export function Settings() {
   const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -81,6 +83,34 @@ export function Settings() {
       </header>
 
       <div className="space-y-6">
+        {/* Theme Section */}
+        <section className="space-y-4">
+          <h2 className="text-xs font-bold text-gold-500 uppercase tracking-widest">Appearance</h2>
+          
+          <div className="glass-panel p-4 rounded-xl">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-sm text-slate-300">Theme</span>
+            </div>
+            <div className="flex gap-2">
+              <ThemeButton 
+                theme="light" 
+                icon={Sun} 
+                label="Light" 
+              />
+              <ThemeButton 
+                theme="dark" 
+                icon={Moon} 
+                label="Dark" 
+              />
+              <ThemeButton 
+                theme="system" 
+                icon={Monitor} 
+                label="System" 
+              />
+            </div>
+          </div>
+        </section>
+
         {/* Data Section */}
         <section className="space-y-4">
           <h2 className="text-xs font-bold text-gold-500 uppercase tracking-widest">Data Management</h2>
@@ -143,5 +173,25 @@ export function Settings() {
         </div>
       </div>
     </div>
+  );
+}
+
+function ThemeButton({ theme, icon: Icon, label }: { theme: Theme; icon: typeof Sun; label: string }) {
+  const { theme: currentTheme, setTheme } = useTheme();
+  const isActive = currentTheme === theme;
+  
+  return (
+    <button
+      onClick={() => setTheme(theme)}
+      className={cn(
+        "flex-1 flex flex-col items-center gap-2 p-3 rounded-xl transition-all border",
+        isActive 
+          ? "bg-gold-500/10 border-gold-500/30 text-gold-400" 
+          : "bg-slate-800/50 border-white/5 text-slate-400 hover:text-slate-200"
+      )}
+    >
+      <Icon size={20} />
+      <span className="text-xs font-medium">{label}</span>
+    </button>
   );
 }

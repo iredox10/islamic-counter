@@ -71,7 +71,46 @@ export default defineConfig({
             type: 'image/png',
             purpose: 'any maskable'
           }
-        ]
+        ],
+        shortcuts: [
+          {
+            name: 'Start Counting',
+            short_name: 'Count',
+            description: 'Open the tasbih counter',
+            url: '/',
+            icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }]
+          },
+          {
+            name: 'Morning Adhkar',
+            short_name: 'Morning',
+            description: 'Open morning adhkar collection',
+            url: '/collections?category=morning',
+            icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }]
+          },
+          {
+            name: 'Evening Adhkar',
+            short_name: 'Evening',
+            description: 'Open evening adhkar collection',
+            url: '/collections?category=evening',
+            icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }]
+          },
+          {
+            name: 'My Goals',
+            short_name: 'Goals',
+            description: 'View your goals',
+            url: '/targets',
+            icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }]
+          }
+        ],
+        share_target: {
+          action: '/',
+          method: 'GET',
+          params: {
+            title: 'title',
+            text: 'text',
+            url: 'url'
+          }
+        }
       }
     })
   ],

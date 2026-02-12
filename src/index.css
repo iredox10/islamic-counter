@@ -6,6 +6,14 @@
 
 :root {
   color-scheme: dark;
+  --bg-primary: #020617;
+  --bg-secondary: #0f172a;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+}
+
+.light {
+  color-scheme: light;
 }
 
 body {
@@ -13,6 +21,42 @@ body {
   touch-action: none; /* Disables browser pinch-zoom etc */
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
+}
+
+.light body,
+.light .bg-slate-950 {
+  @apply bg-slate-100;
+}
+
+.light .text-slate-100 {
+  @apply text-slate-900;
+}
+
+.light .text-slate-400 {
+  @apply text-slate-600;
+}
+
+.light .bg-slate-800\/30,
+.light .bg-slate-800\/50 {
+  @apply bg-slate-200/50;
+}
+
+.light .bg-midnight-800,
+.light .bg-midnight-900,
+.light .bg-midnight-950 {
+  @apply bg-slate-200;
+}
+
+.light .border-white\/5 {
+  @apply border-slate-300/50;
+}
+
+.light .glass-panel {
+  @apply bg-slate-200/80 border-slate-300/50;
+}
+
+.light .glass-card {
+  @apply bg-slate-200/60 border-slate-300/30 hover:bg-slate-200/80;
 }
 
 /* Premium Background Pattern */

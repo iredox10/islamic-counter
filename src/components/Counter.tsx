@@ -2,9 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { db } from '../lib/db';
 import { format } from 'date-fns';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { RotateCcw, Volume2, VolumeX, XCircle } from 'lucide-react';
+import { RotateCcw, Volume2, VolumeX, XCircle, Flame, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../hooks/useSound';
+import { calculateStreak } from '../lib/utils';
+import { gregorianToHijri, getSpecialDay, getUpcomingSpecialDays } from '../lib/hijri';
 
 export function Counter() {
   const [isRipple, setIsRipple] = useState(false);
@@ -88,6 +90,16 @@ export function Counter() {
   );
   const todayTotal = todaysLogs?.reduce((acc, log) => acc + log.count, 0) || 0;
 
+  // Streak calculation
+  const allLogs = useLiveQuery(() => db.logs.toArray());
+  const uniqueDates = allLogs ? [...new Set(allLogs.map(log => log.dateStr))] : [];
+  const { currentStreak } = calculateStreak(uniqueDates);
+
+  // Hijri date
+  const hijriDate = gregorianToHijri(new Date());
+  const specialDay = getSpecialDay(hijriDate);
+  const upcomingDays = getUpcomingSpecialDays(hijriDate, 2);
+
   const handleTap = async () => {
     if (navigator.vibrate) navigator.vibrate(15);
     if (soundEnabled) playClick();
@@ -152,6 +164,12 @@ export function Counter() {
         <div>
           <h2 className="font-serif text-slate-400 text-sm tracking-[0.2em] uppercase">Today</h2>
           <p className="font-serif text-3xl text-white drop-shadow-md">{todayTotal.toLocaleString()}</p>
+          {currentStreak > 0 && (
+            <div className="flex items-center gap-1.5 mt-1">
+              <Flame size={14} className="text-orange-400" />
+              <span className="text-xs text-orange-400 font-medium">{currentStreak} day streak</span>
+            </div>
+          )}
         </div>
         
         <button 
@@ -160,6 +178,24 @@ export function Counter() {
         >
           {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
         </button>
+      </div>
+
+      {/* Hijri Date */}
+      <div className="w-full px-8 mt-4">
+        <div className="flex items-center gap-2">
+          <Calendar size={14} className="text-emerald-400" />
+          <span className="text-xs text-emerald-400 font-medium">{hijriDate.formatted}</span>
+          {specialDay && (
+            <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">
+              {specialDay.name}
+            </span>
+          )}
+        </div>
+        {upcomingDays.length > 0 && !specialDay && (
+          <div className="text-[10px] text-slate-500 mt-1">
+            Next: {upcomingDays[0].name} in {upcomingDays[0].daysUntil} days
+          </div>
+        )}
       </div>
 
       {/* Target Indicator Pill (If Active) */}

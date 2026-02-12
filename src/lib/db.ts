@@ -37,10 +37,19 @@ interface Duration {
   seconds: number;
 }
 
+interface CollectionProgress {
+  id?: number;
+  collectionId: string;
+  itemIndex: number;
+  currentCount: number;
+  dateStr: string;
+}
+
 const db = new Dexie('IslamicCounterDB') as Dexie & {
   logs: EntityTable<Log, 'id'>;
   targets: EntityTable<Target, 'id'>;
   durations: EntityTable<Duration, 'id'>;
+  collectionProgress: EntityTable<CollectionProgress, 'id'>;
 };
 
 // Schema declaration:
@@ -61,5 +70,9 @@ db.version(4).stores({
   durations: '++id, [dateStr+targetId]' // Compound index for fast lookups
 });
 
-export type { Log, Target, Duration };
+db.version(5).stores({
+  collectionProgress: '++id, [collectionId+dateStr+itemIndex], collectionId, dateStr'
+});
+
+export type { Log, Target, Duration, CollectionProgress };
 export { db };
