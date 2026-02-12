@@ -5,7 +5,6 @@ import { Targets } from './pages/Targets';
 import { Stats } from './pages/Stats';
 import { Settings } from './pages/Settings';
 import { Collections } from './pages/Collections';
-import { Achievements } from './pages/Achievements';
 import { ThemeProvider } from './lib/ThemeContext';
 
 function App() {
@@ -18,7 +17,6 @@ function App() {
             <Route path="/collections" element={<Collections />} />
             <Route path="/targets" element={<Targets />} />
             <Route path="/stats" element={<Stats />} />
-            <Route path="/achievements" element={<Achievements />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
         </Routes>

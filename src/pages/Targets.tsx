@@ -1,18 +1,21 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Target } from '../lib/db';
-import { Plus, Trash2, Trophy, PlayCircle, Clock, Repeat, Share2 } from 'lucide-react';
+import { Plus, Trash2, Trophy, PlayCircle, Clock, Repeat, Share2, Lock, Star } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ADHKAR_PRESETS } from '../lib/adhkar';
 import { shareAsText, shareAsImage, type ShareCardData } from '../lib/share';
+import { ACHIEVEMENTS, type Achievement } from '../lib/achievements';
 
 export function Targets() {
   const navigate = useNavigate();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [activeTab, setActiveTab] = useState<'goals' | 'badges'>('goals');
   const targets = useLiveQuery(() => db.targets.toArray());
+  const unlockedAchievements = useLiveQuery(() => db.achievements.toArray());
 
   // Form State
   const [title, setTitle] = useState('');
@@ -93,22 +96,59 @@ export function Targets() {
 
   const activeTargets = targets?.filter(t => t.status === 'active') || [];
 
+  const unlockedMap = new Map(
+    unlockedAchievements?.map(a => [a.achievementId, a.unlockedAt]) || []
+  );
+
+  const totalUnlocked = unlockedAchievements?.length || 0;
+  const totalAchievements = ACHIEVEMENTS.length;
+
   return (
-    <div className="px-6 py-8 space-y-8 pb-32">
+    <div className="px-6 py-8 space-y-6 pb-32">
       <header className="flex justify-between items-end">
         <div>
-          <h1 className="font-serif text-3xl text-slate-100">Goals</h1>
-          <p className="text-slate-400 text-sm mt-1">Select a goal to start counting</p>
+          <h1 className="font-serif text-3xl text-slate-100">Goals & Badges</h1>
         </div>
-        <button
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="bg-gold-500 text-midnight-950 p-3 rounded-xl shadow-lg shadow-gold-500/20 hover:scale-105 transition-transform"
-        >
-          <Plus size={24} />
-        </button>
+        {activeTab === 'goals' && (
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="bg-gold-500 text-midnight-950 p-3 rounded-xl shadow-lg shadow-gold-500/20 hover:scale-105 transition-transform"
+          >
+            <Plus size={24} />
+          </button>
+        )}
       </header>
 
-      <AnimatePresence>
+      {/* Tab Switcher */}
+      <div className="flex gap-2 bg-slate-800/30 p-1 rounded-xl">
+        <button
+          onClick={() => setActiveTab('goals')}
+          className={cn(
+            "flex-1 py-2 text-sm font-medium rounded-lg transition-all",
+            activeTab === 'goals' 
+              ? "bg-gold-500 text-midnight-950" 
+              : "text-slate-400 hover:text-white"
+          )}
+        >
+          Goals
+        </button>
+        <button
+          onClick={() => setActiveTab('badges')}
+          className={cn(
+            "flex-1 py-2 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2",
+            activeTab === 'badges' 
+              ? "bg-gold-500 text-midnight-950" 
+              : "text-slate-400 hover:text-white"
+          )}
+        >
+          Badges
+          <span className="text-xs opacity-70">{totalUnlocked}/{totalAchievements}</span>
+        </button>
+      </div>
+
+      {activeTab === 'goals' ? (
+        <>
+          <AnimatePresence>
         {showAddForm && (
           <motion.form 
             initial={{ height: 0, opacity: 0 }}
@@ -257,24 +297,116 @@ export function Targets() {
         )}
       </AnimatePresence>
 
-      <div className="space-y-4">
-        {activeTargets.length === 0 && !showAddForm && (
-          <div className="text-center py-12 opacity-40">
-            <Trophy size={48} className="mx-auto mb-4 text-slate-600" />
-            <p>No active goals</p>
+          <div className="space-y-4">
+            {activeTargets.length === 0 && !showAddForm && (
+              <div className="text-center py-12 opacity-40">
+                <Trophy size={48} className="mx-auto mb-4 text-slate-600" />
+                <p>No active goals</p>
+              </div>
+            )}
+            
+            {activeTargets.map(target => (
+              <div key={target.id} onClick={() => handleSelectTarget(target)} className="cursor-pointer">
+                <TargetCard 
+                  target={target} 
+                  onDelete={(e) => handleDelete(e, target.id!)} 
+                />
+              </div>
+            ))}
           </div>
-        )}
-        
-        {activeTargets.map(target => (
-          <div key={target.id} onClick={() => handleSelectTarget(target)} className="cursor-pointer">
-            <TargetCard 
-              target={target} 
-              onDelete={(e) => handleDelete(e, target.id!)} 
-            />
-          </div>
-        ))}
-      </div>
+        </>
+      ) : (
+        <BadgesTab unlockedMap={unlockedMap} totalUnlocked={totalUnlocked} totalAchievements={totalAchievements} />
+      )}
     </div>
+  );
+}
+
+function BadgesTab({ unlockedMap, totalUnlocked, totalAchievements }: { 
+  unlockedMap: Map<string, Date>; 
+  totalUnlocked: number; 
+  totalAchievements: number;
+}) {
+  const categorizedAchievements = {
+    count: ACHIEVEMENTS.filter(a => a.category === 'count'),
+    streak: ACHIEVEMENTS.filter(a => a.category === 'streak'),
+    goal: ACHIEVEMENTS.filter(a => a.category === 'goal'),
+    time: ACHIEVEMENTS.filter(a => a.category === 'time'),
+    special: ACHIEVEMENTS.filter(a => a.category === 'special'),
+  };
+
+  const progressPercent = (totalUnlocked / totalAchievements) * 100;
+
+  return (
+    <div className="space-y-6">
+      {/* Progress Overview */}
+      <div className="glass-panel p-4 rounded-2xl">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-gold-500/10">
+              <Trophy className="text-gold-400" size={20} />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-white">{totalUnlocked} / {totalAchievements}</p>
+              <p className="text-[10px] text-slate-400">Achievements Unlocked</p>
+            </div>
+          </div>
+          <p className="text-sm font-bold text-gold-400">{Math.round(progressPercent)}%</p>
+        </div>
+        <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          <motion.div 
+            initial={{ width: 0 }}
+            animate={{ width: `${progressPercent}%` }}
+            className="h-full bg-gradient-to-r from-gold-600 to-gold-400 rounded-full"
+          />
+        </div>
+      </div>
+
+      {/* Achievement Categories */}
+      <AchievementCategory title="Count Milestones" achievements={categorizedAchievements.count} unlockedMap={unlockedMap} />
+      <AchievementCategory title="Streak Mastery" achievements={categorizedAchievements.streak} unlockedMap={unlockedMap} />
+      <AchievementCategory title="Goal Achiever" achievements={categorizedAchievements.goal} unlockedMap={unlockedMap} />
+      <AchievementCategory title="Special Moments" achievements={[...categorizedAchievements.time, ...categorizedAchievements.special]} unlockedMap={unlockedMap} />
+    </div>
+  );
+}
+
+function AchievementCategory({ title, achievements, unlockedMap }: { title: string; achievements: Achievement[]; unlockedMap: Map<string, Date> }) {
+  return (
+    <section>
+      <h2 className="text-[10px] font-bold text-gold-500 uppercase tracking-widest mb-2">{title}</h2>
+      <div className="grid grid-cols-4 gap-2">
+        {achievements.map(achievement => {
+          const unlockedAt = unlockedMap.get(achievement.id);
+          const isUnlocked = !!unlockedAt;
+          
+          return (
+            <div
+              key={achievement.id}
+              className={cn(
+                "glass-card rounded-xl p-2 flex flex-col items-center text-center relative overflow-hidden",
+                isUnlocked && "border-gold-500/30"
+              )}
+            >
+              <span className={cn("text-2xl", isUnlocked ? "" : "grayscale opacity-40")}>
+                {achievement.icon}
+              </span>
+              <span className={cn("text-[8px] font-bold leading-tight mt-1", isUnlocked ? "text-slate-100" : "text-slate-500")}>
+                {achievement.title}
+              </span>
+              {isUnlocked ? (
+                <div className="flex items-center gap-0.5 mt-0.5">
+                  <Star size={8} className="text-gold-400" />
+                  <span className="text-[8px] text-gold-400">{unlockedAt.toLocaleDateString()}</span>
+                </div>
+              ) : (
+                <Lock size={8} className="text-slate-600 mt-0.5" />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
