@@ -3,12 +3,16 @@ import { Navigation } from './Navigation';
 import { Toaster } from 'sonner';
 import { useReminders } from '../hooks/useReminders';
 import { InstallBanner } from './InstallBanner';
+import { OfflineIndicator } from '../hooks/useOnlineStatus';
 
 export function Layout() {
   useReminders(); // Activate background logic
 
   return (
     <div className="h-dvh w-screen overflow-hidden bg-islamic-pattern text-slate-100 font-sans selection:text-gold-400">
+      
+      {/* Offline Indicator */}
+      <OfflineIndicator />
       
       {/* Decorative Background Elements */}
       <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
