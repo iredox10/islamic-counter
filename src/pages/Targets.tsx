@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Target } from '../lib/db';
-import { Plus, Trash2, Trophy, PlayCircle, Clock, Repeat } from 'lucide-react';
+import { Plus, Trash2, Trophy, PlayCircle, Clock, Repeat, Share2 } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ADHKAR_PRESETS } from '../lib/adhkar';
+import { shareAsText, shareAsImage, type ShareCardData } from '../lib/share';
 
 export function Targets() {
   const navigate = useNavigate();
@@ -281,6 +282,23 @@ function TargetCard({ target, onDelete }: { target: Target; onDelete: (e: React.
   const progress = Math.min(100, Math.round((target.currentCount / target.targetCount) * 100));
   const daysLeft = target.deadline ? differenceInDays(target.deadline, new Date()) : null;
 
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const shareData: ShareCardData = {
+      title: target.title,
+      count: target.currentCount,
+      targetCount: target.targetCount,
+      completedAt: new Date()
+    };
+    
+    try {
+      await shareAsImage(shareData);
+    } catch {
+      await shareAsText(shareData);
+    }
+  };
+
   return (
     <div className="glass-card rounded-2xl p-5 group relative overflow-hidden transition-transform active:scale-[0.98]">
       {/* Background Gradient for progress hint */}
@@ -317,6 +335,11 @@ function TargetCard({ target, onDelete }: { target: Target; onDelete: (e: React.
         <button onClick={onDelete} className="text-slate-500 hover:text-red-400 p-2 -mr-2 -mt-2 z-20">
           <Trash2 size={16} />
         </button>
+        {progress >= 50 && (
+          <button onClick={handleShare} className="text-slate-500 hover:text-gold-400 p-2 z-20">
+            <Share2 size={16} />
+          </button>
+        )}
       </div>
 
       <div className="relative h-2 bg-slate-950/50 rounded-full overflow-hidden">

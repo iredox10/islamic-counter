@@ -1,11 +1,42 @@
 import { db } from '../lib/db';
-import { Download, Upload, Trash2, CheckCircle2, Sun, Moon, Monitor } from 'lucide-react';
-import { useState } from 'react';
+import { Download, Upload, Trash2, CheckCircle2, Sun, Moon, Monitor, Bell, BellOff, Clock, RefreshCw } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useTheme, type Theme } from '../lib/ThemeContext';
 import { cn } from '../lib/utils';
+import { getStoredReminders, saveReminders, updateReminder, type DailyReminder } from '../lib/reminders';
 
 export function Settings() {
   const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [reminders, setReminders] = useState<DailyReminder[]>([]);
+  const [autoReset, setAutoReset] = useState(() => localStorage.getItem('auto-reset') === 'true');
+
+  useEffect(() => {
+    setReminders(getStoredReminders());
+  }, []);
+
+  const handleToggleAutoReset = () => {
+    const newValue = !autoReset;
+    setAutoReset(newValue);
+    localStorage.setItem('auto-reset', String(newValue));
+  };
+
+  const handleToggleReminder = (id: string) => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+    
+    const updated = updateReminder(reminders, id, { 
+      enabled: !reminders.find(r => r.id === id)?.enabled 
+    });
+    setReminders(updated);
+    saveReminders(updated);
+  };
+
+  const handleTimeChange = (id: string, time: string) => {
+    const updated = updateReminder(reminders, id, { time });
+    setReminders(updated);
+    saveReminders(updated);
+  };
 
   const handleExport = async () => {
     try {
@@ -108,6 +139,78 @@ export function Settings() {
                 label="System" 
               />
             </div>
+          </div>
+        </section>
+
+        {/* Reminders Section */}
+        <section className="space-y-4">
+          <h2 className="text-xs font-bold text-gold-500 uppercase tracking-widest">Daily Reminders</h2>
+          
+          <div className="glass-panel p-4 rounded-xl space-y-2">
+            {reminders.map(reminder => (
+              <div key={reminder.id} className="flex items-center justify-between p-2 rounded-lg bg-slate-800/30">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => handleToggleReminder(reminder.id)}
+                    className={cn(
+                      "p-2 rounded-lg transition-colors",
+                      reminder.enabled 
+                        ? "bg-gold-500/20 text-gold-400" 
+                        : "bg-slate-700/50 text-slate-500"
+                    )}
+                  >
+                    {reminder.enabled ? <Bell size={18} /> : <BellOff size={18} />}
+                  </button>
+                  <div>
+                    <p className="text-sm font-medium text-slate-200">{reminder.name}</p>
+                    <p className="text-[10px] text-slate-500">{reminder.message}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock size={14} className="text-slate-500" />
+                  <input
+                    type="time"
+                    value={reminder.time}
+                    onChange={(e) => handleTimeChange(reminder.id, e.target.value)}
+                    className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-300 outline-none focus:border-gold-500/50"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Session Section */}
+        <section className="space-y-4">
+          <h2 className="text-xs font-bold text-gold-500 uppercase tracking-widest">Session Settings</h2>
+          
+          <div className="glass-panel p-4 rounded-xl">
+            <button 
+              onClick={handleToggleAutoReset}
+              className="w-full flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "p-2 rounded-lg transition-colors",
+                  autoReset ? "bg-emerald-500/20 text-emerald-400" : "bg-slate-700/50 text-slate-500"
+                )}>
+                  <RefreshCw size={18} />
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-medium text-slate-200">Auto-reset at Midnight</p>
+                  <p className="text-[10px] text-slate-500">Start fresh each day while keeping total stats</p>
+                </div>
+              </div>
+              <div className={cn(
+                "w-10 h-6 rounded-full transition-colors relative",
+                autoReset ? "bg-emerald-500" : "bg-slate-700"
+              )}>
+                <div className={cn(
+                  "absolute top-1 w-4 h-4 rounded-full bg-white transition-all",
+                  autoReset ? "left-5" : "left-1"
+                )} />
+              </div>
+            </button>
           </div>
         </section>
 

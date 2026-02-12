@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../hooks/useSound';
 import { calculateStreak } from '../lib/utils';
 import { gregorianToHijri, getSpecialDay, getUpcomingSpecialDays } from '../lib/hijri';
+import { useAchievementTracker } from '../lib/useAchievementTracker';
 
 export function Counter() {
   const [isRipple, setIsRipple] = useState(false);
@@ -32,6 +33,23 @@ export function Counter() {
   const [soundEnabled, setSoundEnabled] = useState(() => {
     return localStorage.getItem('sound-enabled') === 'true';
   });
+
+  // Auto-reset at midnight
+  const autoReset = localStorage.getItem('auto-reset') === 'true';
+
+  // Check for midnight reset
+  useEffect(() => {
+    const lastDate = localStorage.getItem('last-counter-date');
+    const today = format(new Date(), 'yyyy-MM-dd');
+    
+    if (lastDate && lastDate !== today && autoReset) {
+      setSessionCount(0);
+      setActiveTargetId(null);
+      localStorage.setItem('counter-state', JSON.stringify({ count: 0, targetId: null }));
+    }
+    
+    localStorage.setItem('last-counter-date', today);
+  }, [autoReset]);
 
   useEffect(() => {
     localStorage.setItem('sound-enabled', String(soundEnabled));
@@ -94,6 +112,17 @@ export function Counter() {
   const allLogs = useLiveQuery(() => db.logs.toArray());
   const uniqueDates = allLogs ? [...new Set(allLogs.map(log => log.dateStr))] : [];
   const { currentStreak } = calculateStreak(uniqueDates);
+
+  // Total counts
+  const totalCount = allLogs?.reduce((acc, log) => acc + log.count, 0) || 0;
+
+  // Completed goals
+  const completedGoals = useLiveQuery(() => 
+    db.targets.where('status').equals('completed').count()
+  );
+
+  // Achievement tracking
+  useAchievementTracker(totalCount, currentStreak, completedGoals || 0, sessionCount);
 
   // Hijri date
   const hijriDate = gregorianToHijri(new Date());

@@ -4,6 +4,8 @@ export interface AdhkarItem {
   meaning: string;
   target: number;
   reference?: string;
+  virtue?: string;
+  hadith?: string;
 }
 
 export interface AdhkarCollection {
@@ -19,49 +21,65 @@ export const ADHKAR_PRESETS: AdhkarItem[] = [
     title: "SubhanAllah",
     arabic: "سُبْحَانَ اللَّهِ",
     meaning: "Glory be to Allah",
-    target: 33
+    target: 33,
+    virtue: "A tree is planted in Paradise for each recitation",
+    hadith: "Whoever says 'SubhanAllah' 100 times, his sins are forgiven even if they are like the foam of the sea. (Bukhari)"
   },
   {
     title: "Alhamdulillah",
     arabic: "الْحَمْدُ لِلَّهِ",
     meaning: "Praise be to Allah",
-    target: 33
+    target: 33,
+    virtue: "Fills the scale with good deeds",
+    hadith: "Saying 'Alhamdulillah' fills the scales. (Muslim)"
   },
   {
     title: "Allahu Akbar",
     arabic: "اللَّهُ أَكْبَرُ",
     meaning: "Allah is the Greatest",
-    target: 33
+    target: 33,
+    virtue: "Fills what is between the heavens and earth",
+    hadith: "Saying 'Allahu Akbar' fills what is between the heavens and the earth. (Muslim)"
   },
   {
     title: "Astaghfirullah",
     arabic: "أَسْتَغْفِرُ اللَّهَ",
     meaning: "I seek forgiveness from Allah",
-    target: 100
+    target: 100,
+    virtue: "Relief from distress and increase in provision",
+    hadith: "Whoever regularly seeks forgiveness, Allah will appoint for him a way out of every distress and relief from every worry. (Abu Dawud)"
   },
   {
     title: "La ilaha illa Allah",
     arabic: "لَا إِلَهَ إِلَّا اللَّهُ",
     meaning: "There is no deity but Allah",
-    target: 100
+    target: 100,
+    virtue: "Best form of dhikr, enters Paradise",
+    hadith: "The best dhikr is 'La ilaha illa Allah'. (Tirmidhi)"
   },
   {
     title: "Salawat",
     arabic: "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ",
     meaning: "Blessings upon the Prophet",
-    target: 100
+    target: 100,
+    virtue: "Allah sends 10 blessings upon you for each one",
+    hadith: "Whoever sends blessings upon me once, Allah will send blessings upon him tenfold. (Muslim)"
   },
   {
     title: "SubhanAllah wa bihamdihi",
     arabic: "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
     meaning: "Glory be to Allah and His Praise",
-    target: 100
+    target: 100,
+    virtue: "Light on the tongue, heavy on the scale",
+    hadith: "Two words light on the tongue, heavy on the scale, beloved to the Most Merciful: SubhanAllah wa bihamdihi, SubhanAllah al-Azim. (Bukhari)"
   },
   {
     title: "La hawla wa la quwwata illa billah",
     arabic: "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ",
     meaning: "No power nor strength except by Allah",
-    target: 100
+    target: 100,
+    virtue: "A treasure of Paradise, cure for 99 ailments",
+    hadith: "'La hawla wa la quwwata illa billah' is a treasure from the treasures of Paradise. (Bukhari)"
   }
 ];
 

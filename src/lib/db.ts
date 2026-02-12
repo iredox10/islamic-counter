@@ -45,11 +45,18 @@ interface CollectionProgress {
   dateStr: string;
 }
 
+interface UnlockedAchievement {
+  id?: number;
+  achievementId: string;
+  unlockedAt: Date;
+}
+
 const db = new Dexie('IslamicCounterDB') as Dexie & {
   logs: EntityTable<Log, 'id'>;
   targets: EntityTable<Target, 'id'>;
   durations: EntityTable<Duration, 'id'>;
   collectionProgress: EntityTable<CollectionProgress, 'id'>;
+  achievements: EntityTable<UnlockedAchievement, 'id'>;
 };
 
 // Schema declaration:
@@ -74,5 +81,9 @@ db.version(5).stores({
   collectionProgress: '++id, [collectionId+dateStr+itemIndex], collectionId, dateStr'
 });
 
-export type { Log, Target, Duration, CollectionProgress };
+db.version(6).stores({
+  achievements: '++id, achievementId, unlockedAt'
+});
+
+export type { Log, Target, Duration, CollectionProgress, UnlockedAchievement };
 export { db };

@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Target, BarChart2, Settings, BookOpen } from 'lucide-react';
+import { Home, Target, BarChart2, Settings, BookOpen, Trophy } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion } from 'framer-motion';
 
@@ -9,6 +9,7 @@ export function Navigation() {
   const navItems = [
     { path: '/', icon: Home, label: 'Tasbih' },
     { path: '/collections', icon: BookOpen, label: 'Adhkar' },
+    { path: '/achievements', icon: Trophy, label: 'Badges' },
     { path: '/targets', icon: Target, label: 'Goals' },
     { path: '/stats', icon: BarChart2, label: 'Progress' },
     { path: '/settings', icon: Settings, label: 'Settings' },

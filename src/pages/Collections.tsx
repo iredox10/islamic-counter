@@ -200,6 +200,13 @@ export function Collections() {
               <p className="text-sm text-slate-400">
                 {selectedCollection.items[activeItemIndex].meaning}
               </p>
+              {selectedCollection.items[activeItemIndex].virtue && (
+                <div className="mt-4 p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
+                  <p className="text-xs text-emerald-400 font-medium">
+                    ✨ {selectedCollection.items[activeItemIndex].virtue}
+                  </p>
+                </div>
+              )}
             </div>
 
             <button
