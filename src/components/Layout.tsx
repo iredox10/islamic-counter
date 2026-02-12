@@ -8,7 +8,7 @@ export function Layout() {
   useReminders(); // Activate background logic
 
   return (
-    <div className="min-h-screen bg-islamic-pattern text-slate-100 font-sans selection:text-gold-400">
+    <div className="h-screen w-screen overflow-hidden bg-islamic-pattern text-slate-100 font-sans selection:text-gold-400">
       
       {/* Decorative Background Elements */}
       <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
@@ -17,7 +17,7 @@ export function Layout() {
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[500px] h-64 bg-gold-600/5 blur-[100px]" />
       </div>
 
-      <main className="max-w-md mx-auto min-h-screen relative pb-24">
+      <main className="h-full w-full max-w-md mx-auto relative overflow-y-auto pb-32 overscroll-none scroll-smooth">
         <Outlet />
       </main>
       

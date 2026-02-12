@@ -9,9 +9,10 @@
 }
 
 body {
-  @apply bg-slate-950 text-slate-100 font-sans selection:bg-gold-500/30;
-  touch-action: manipulation;
+  @apply bg-slate-950 text-slate-100 font-sans selection:bg-gold-500/30 overflow-hidden;
+  touch-action: none; /* Disables browser pinch-zoom etc */
   -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
 }
 
 /* Premium Background Pattern */
@@ -32,13 +33,15 @@ body {
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 0px;
+  background: transparent;
 }
-::-webkit-scrollbar-track {
-  @apply bg-slate-950;
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
-::-webkit-scrollbar-thumb {
-  @apply bg-slate-800 rounded-full hover:bg-gold-600 transition-colors;
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Animations */
