@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { db } from '../lib/db';
 import { format } from 'date-fns';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { RotateCcw, Volume2, VolumeX, XCircle, Flame, Calendar, Layers } from 'lucide-react';
+import { RotateCcw, Volume2, VolumeX, Flame, Calendar, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../hooks/useSound';
 import { calculateStreak, cn } from '../lib/utils';
@@ -224,13 +224,6 @@ export function Counter() {
     }
   };
 
-  const clearActiveTarget = () => {
-    if (confirm('Stop tracking this goal?')) {
-      setActiveTargetId(null);
-      setSessionCount(0);
-    }
-  };
-
   // Long-press handlers for manual entry
   const handleHoldStart = () => {
     holdTimeoutRef.current = setTimeout(() => {
@@ -338,26 +331,6 @@ export function Counter() {
         )}
       </div>
 
-      {/* Target Indicator Pill (If Active) */}
-      <AnimatePresence>
-        {activeTarget && (
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="absolute top-28 bg-gold-500/10 border border-gold-500/20 px-4 py-2 rounded-full flex items-center gap-3 backdrop-blur-md z-10"
-          >
-             <div className="flex flex-col">
-                <span className="text-[10px] uppercase tracking-wider text-gold-400 font-bold">Target Active</span>
-                <span className="text-sm font-serif text-slate-100">{activeTarget.title}</span>
-             </div>
-             <button onClick={clearActiveTarget} className="text-slate-400 hover:text-white ml-2">
-                <XCircle size={18} />
-             </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Main Counter Area */}
       <div className="flex-1 flex flex-col justify-center items-center -mt-16 w-full">
         <div className="relative">
@@ -433,14 +406,18 @@ export function Counter() {
                     </span>
                   </>
                 ) : (
-                  <span className="font-serif text-8xl text-gold-400 drop-shadow-2xl select-none tabular-nums tracking-tighter">
-                    {sessionCount}
-                  </span>
+                  <>
+                    <span className="font-serif text-8xl text-gold-400 drop-shadow-2xl select-none tabular-nums tracking-tighter">
+                      {sessionCount}
+                    </span>
+                  </>
                 )}
              </div>
 
-             <span className="text-slate-500 text-xs tracking-[0.3em] font-medium uppercase mt-2 group-hover:text-gold-500/50 transition-colors">
-               {multiMode ? MULTI_COUNTER_PRESET[activeCounterIndex].name : 'Tasbih'}
+             <span className="text-slate-500 text-xs tracking-[0.3em] font-medium uppercase mt-2 group-hover:text-gold-500/50 transition-colors truncate max-w-48">
+               {multiMode 
+                 ? MULTI_COUNTER_PRESET[activeCounterIndex].name 
+                 : activeTarget?.title || 'Tasbih'}
              </span>
           </button>
         </div>
