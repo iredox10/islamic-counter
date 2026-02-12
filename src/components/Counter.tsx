@@ -145,7 +145,7 @@ export function Counter() {
   };
 
   return (
-    <div className="flex flex-col items-center h-screen pt-12 relative">
+    <div className="flex flex-col items-center min-h-full pt-12 relative">
       
       {/* Top Bar */}
       <div className="w-full px-8 flex justify-between items-start animate-in fade-in slide-in-from-top-4 duration-700">
