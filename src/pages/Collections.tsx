@@ -4,7 +4,7 @@ import { db } from '../lib/db';
 import { ADHKAR_COLLECTIONS, type AdhkarCollection } from '../lib/adhkar';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sun, Moon, Hand, Bed, Sparkles, ChevronRight, Check, X } from 'lucide-react';
+import { Sun, Moon, Hand, Bed, Sparkles, ChevronRight, Check, X, Languages } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useSearchParams } from 'react-router-dom';
 
@@ -29,6 +29,7 @@ export function Collections() {
   const [selectedCollection, setSelectedCollection] = useState<AdhkarCollection | null>(null);
   const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
   const [itemCount, setItemCount] = useState(0);
+  const [showTranslation, setShowTranslation] = useState(true);
   
   const todayStr = format(new Date(), 'yyyy-MM-dd');
 
@@ -185,6 +186,16 @@ export function Collections() {
               <X size={20} />
             </button>
 
+            <button 
+              onClick={() => setShowTranslation(!showTranslation)}
+              className={cn(
+                "absolute top-4 right-14 p-2 rounded-full transition-colors",
+                showTranslation ? "bg-gold-500/20 text-gold-400" : "bg-slate-800/50 text-slate-400 hover:text-white"
+              )}
+            >
+              <Languages size={20} />
+            </button>
+
             <div className="text-center space-y-2">
               <span className="text-[10px] uppercase tracking-wider text-gold-400 font-bold">
                 {selectedCollection.title} • {activeItemIndex + 1}/{selectedCollection.items.length}
@@ -197,10 +208,12 @@ export function Collections() {
                   {selectedCollection.items[activeItemIndex].arabic}
                 </p>
               )}
-              <p className="text-sm text-slate-400">
-                {selectedCollection.items[activeItemIndex].meaning}
-              </p>
-              {selectedCollection.items[activeItemIndex].virtue && (
+              {showTranslation && (
+                <p className="text-sm text-slate-400">
+                  {selectedCollection.items[activeItemIndex].meaning}
+                </p>
+              )}
+              {showTranslation && selectedCollection.items[activeItemIndex].virtue && (
                 <div className="mt-4 p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
                   <p className="text-xs text-emerald-400 font-medium">
                     ✨ {selectedCollection.items[activeItemIndex].virtue}
@@ -256,14 +269,25 @@ export function Collections() {
               Back
             </button>
 
-            <div className="flex items-center gap-4">
-              <div className={cn("p-3 rounded-xl", categoryColors[selectedCollection.category])}>
-                {(() => { const Icon = categoryIcons[selectedCollection.category]; return <Icon size={24} />; })()}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className={cn("p-3 rounded-xl", categoryColors[selectedCollection.category])}>
+                  {(() => { const Icon = categoryIcons[selectedCollection.category]; return <Icon size={24} />; })()}
+                </div>
+                <div>
+                  <h2 className="font-serif text-2xl text-slate-100">{selectedCollection.title}</h2>
+                  <p className="text-sm text-slate-400">{selectedCollection.description}</p>
+                </div>
               </div>
-              <div>
-                <h2 className="font-serif text-2xl text-slate-100">{selectedCollection.title}</h2>
-                <p className="text-sm text-slate-400">{selectedCollection.description}</p>
-              </div>
+              <button
+                onClick={() => setShowTranslation(!showTranslation)}
+                className={cn(
+                  "p-2 rounded-lg transition-colors",
+                  showTranslation ? "bg-gold-500/20 text-gold-400" : "bg-slate-800/50 text-slate-500"
+                )}
+              >
+                <Languages size={18} />
+              </button>
             </div>
 
             <div className="space-y-3">
@@ -297,7 +321,9 @@ export function Collections() {
                             {item.arabic}
                           </p>
                         )}
-                        <p className="text-xs text-slate-500 mt-1">{item.meaning}</p>
+                        {showTranslation && (
+                          <p className="text-xs text-slate-500 mt-1">{item.meaning}</p>
+                        )}
                       </div>
                       <div className="text-right">
                         <span className={cn(

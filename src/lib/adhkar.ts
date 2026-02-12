@@ -136,45 +136,166 @@ export const ADHKAR_COLLECTIONS: AdhkarCollection[] = [
     category: 'morning',
     items: [
       {
-        title: "SubhanAllah wa bihamdihi",
-        arabic: "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
-        meaning: "Glory be to Allah and His Praise",
-        target: 100,
-        reference: "Muslim"
+        title: "Surah Al-Fatihah",
+        arabic: "سُورَةُ الْفَاتِحَة",
+        meaning: "The Opening Chapter of the Quran",
+        target: 1,
+        reference: "Recite once",
+        virtue: "The greatest surah in the Quran - Allah responds to each verse",
+        hadith: "Allah said: 'I have divided prayer between myself and my servant into two halves.' (Muslim 395)"
       },
       {
-        title: "La ilaha illa Allah",
-        arabic: "لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ",
-        meaning: "None has the right to be worshipped but Allah alone, He has no partner, His is the dominion and His is the praise, and He is Able to do all things",
-        target: 100,
-        reference: "Bukhari & Muslim"
+        title: "Ayat al-Kursi",
+        arabic: "آيَةُ الْكُرْسِيِّ",
+        meaning: "Verse of the Throne (Surah Al-Baqarah: 255)",
+        target: 1,
+        reference: "Recite once",
+        virtue: "Protection from Shaytan all day",
+        hadith: "Whoever recites Ayatul Kursi after each prescribed prayer, nothing stands between him and Paradise except death. (An-Nasai)"
       },
       {
-        title: "SubhanAllah wa bihamdihi 'adada khalqihi",
-        arabic: "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ عَدَدَ خَلْقِهِ",
-        meaning: "Glory be to Allah and praise Him as many as His creations",
+        title: "Surah Al-Ikhlas",
+        arabic: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ قُلْ هُوَ اللَّهُ أَحَدٌ ۝ اللَّهُ الصَّمَدُ ۝ لَمْ يَلِدْ وَلَمْ يُولَدْ ۝ وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ",
+        meaning: "Say: He is Allah, the One. Allah, the Eternal Refuge. He neither begets nor is born, nor is there to Him any equivalent.",
         target: 3,
-        reference: "Muslim"
+        reference: "Recite 3 times",
+        virtue: "Equals one-third of the Quran in reward",
+        hadith: "Recite Surat Al-Ikhlas, Al-Falaq and An-Nas three times at dawn and dusk - it will suffice you in all respects. (Abu Dawood 5082)"
       },
       {
-        title: "Hasbiyallahu la ilaha illa Huwa",
-        arabic: "حَسْبِيَ اللَّهُ لَا إِلَهَ إِلَّا هُوَ عَلَيْهِ تَوَكَّلْتُ وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ",
-        meaning: "Allah is sufficient for me. There is no deity except Him. I have placed my trust in Him, and He is the Lord of the Great Throne",
-        target: 7,
-        reference: "Abu Dawud"
+        title: "Surah Al-Falaq",
+        arabic: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ ۝ مِن شَرِّ مَا خَلَقَ ۝ وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ ۝ وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ ۝ وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ",
+        meaning: "Say: I seek refuge in the Lord of daybreak, from the evil of that which He created, and from the evil of darkness when it settles, and from the evil of the blowers in knots, and from the evil of an envier when he envies.",
+        target: 3,
+        reference: "Recite 3 times",
+        virtue: "Protection from all evil",
+        hadith: "The Prophet ﷺ would recite these three surahs, blow into his hands, and wipe over his body. (Al-Bukhari)"
+      },
+      {
+        title: "Surah An-Nas",
+        arabic: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ قُلْ أَعُوذُ بِرَبِّ النَّاسِ ۝ مَلِكِ النَّاسِ ۝ إِلَٰهِ النَّاسِ ۝ مِن شَرِّ الْوَسْوَاسِ الْخَنَّاسِ ۝ الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ ۝ مِنَ الْجِنَّةِ وَالنَّاسِ",
+        meaning: "Say: I seek refuge in the Lord of mankind, the Sovereign of mankind, the God of mankind, from the evil of the retreating whisperer who whispers in the breasts of mankind, from among the jinn and mankind.",
+        target: 3,
+        reference: "Recite 3 times",
+        virtue: "Protection from whispers of jinn and mankind",
+        hadith: "The Prophet ﷺ would recite these three surahs for protection. (Al-Bukhari)"
+      },
+      {
+        title: "Morning Dua - Sovereignty belongs to Allah",
+        arabic: "أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ وَالْحَمْدُ لِلَّهِ لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ رَبِّ أَسْأَلُكَ خَيْرَ مَا فِي هَٰذَا الْيَوْمِ وَخَيْرَ مَا بَعْدَهُ وَأَعُوذُ بِكَ مِن شَرِّ مَا فِي هَٰذَا الْيَوْمِ وَشَرِّ مَا بَعْدَهُ رَبِّ أَعُوذُ بِكَ مِنَ الْكَسَلِ وَسُوءِ الْكِبَرِ رَبِّ أَعُوذُ بِكَ مِنْ عَذَابٍ فِي النَّارِ وَعَذَابٍ فِي الْقَبْرِ",
+        meaning: "We have reached the morning and at this very time unto Allah belongs all sovereignty, and all praise is for Allah. None has the right to be worshiped except Allah, alone, without partner, to Him belongs all sovereignty and praise and He is over all things omnipotent. My Lord, I ask You for the good of this day and the good of what follows it and I take refuge in You from the evil of this day and the evil of what follows it. My Lord, I take refuge in You from laziness and senility. My Lord, I take refuge in You from torment in the Fire and punishment in the grave.",
+        target: 1,
+        reference: "Muslim 4/2088",
+        virtue: "Complete morning supplication taught by the Prophet ﷺ",
+        hadith: "The Prophet ﷺ used to supplicate this every morning. (Muslim 2723)"
       },
       {
         title: "Allahumma bika asbahna",
         arabic: "اللَّهُمَّ بِكَ أَصْبَحْنَا وَبِكَ أَمْسَيْنَا وَبِكَ نَحْيَا وَبِكَ نَمُوتُ وَإِلَيْكَ النُّشُورُ",
-        meaning: "O Allah, by Your leave we have reached the morning and by Your leave we reach the evening, by Your leave we live and die, and unto You is our resurrection",
-        target: 1
+        meaning: "O Allah, by Your leave we have reached the morning, by Your leave we live and die, and unto You is our return",
+        target: 1,
+        reference: "Abu Dawood 5068",
+        virtue: "Acknowledging Allah's control over life and death",
+        hadith: "The Messenger ﷺ taught his companions to recite this morning and evening. (At-Tirmidhi 3391)"
       },
       {
-        title: "Surah Al-Ikhlas, Al-Falaq, An-Nas",
-        arabic: "قُلْ هُوَ اللَّهُ أَحَدٌ ...",
-        meaning: "The Three Qul (Surahs of Protection)",
+        title: "Gratitude Dua",
+        arabic: "اللَّهُمَّ مَا أَصْبَحَ بِي مِنْ نِعْمَةٍ أَوْ بِأَحَدٍ مِنْ خَلْقِكَ فَمِنْكَ وَحْدَكَ لَا شَرِيكَ لَكَ فَلَكَ الْحَمْدُ وَلَكَ الشُّكْرُ",
+        meaning: "O Allah, whatever blessing I or any of Your creation have risen upon, is from You alone, without partner, so for You is all praise and unto You all thanks.",
+        target: 1,
+        reference: "Abu Dawood 4/324",
+        virtue: "Fulfills obligation of gratitude for the day",
+        hadith: "Whoever recites this in the morning has offered his day's thanks. (Abu Dawood)"
+      },
+      {
+        title: "Radeetu billahi Rabba",
+        arabic: "رَضِيتُ بِاللَّهِ رَبًّا وَبِالْإِسْلَامِ دِينًا وَبِمُحَمَّدٍ نَبِيًّا",
+        meaning: "I am pleased with Allah as my Lord, Islam as my religion, and Muhammad as my Prophet",
         target: 3,
-        reference: "Recite 3 times each after Fajr"
+        reference: "Imam Ahmad 18967",
+        virtue: "Allah will make you content on the Day of Resurrection",
+        hadith: "Whoever recites this morning and evening will be content on the Day of Resurrection. (An-Nasai)"
+      },
+      {
+        title: "Protection Dua - Bismillah",
+        arabic: "بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ",
+        meaning: "In the name of Allah with whose name nothing is harmed on earth nor in the heavens, and He is The All-Hearing, The All-Knowing.",
+        target: 3,
+        reference: "Abu Dawood 4/323",
+        virtue: "Protection from all harm until evening",
+        hadith: "Whoever recites this three times will not be stricken with sudden affliction. (Abu Dawood 5088)"
+      },
+      {
+        title: "Protection in Allah's Words",
+        arabic: "أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ",
+        meaning: "I seek protection in the perfect words of Allah from every evil that He has created",
+        target: 3,
+        reference: "Imam Ahmad 2/290",
+        virtue: "Protection from all created evil",
+        hadith: "If you had said this when evening came, the scorpion would not have harmed you. (Muslim 2709)"
+      },
+      {
+        title: "Hasbiyallahu",
+        arabic: "حَسْبِيَ اللَّهُ لَا إِلَهَ إِلَّا هُوَ عَلَيْهِ تَوَكَّلْتُ وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ",
+        meaning: "Allah is sufficient for me, none has the right to be worshipped except Him, upon Him I rely",
+        target: 7,
+        reference: "Abu Dawood 4/321",
+        virtue: "Allah will suffice you against all concerns",
+        hadith: "Whoever says this morning and evening seven times, Allah will suffice him. (Abu Dawood 5081)"
+      },
+      {
+        title: "Sayyidul Istighfar",
+        arabic: "اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَٰهَ إِلَّا أَنْتَ خَلَقْتَنِي وَأَنَا عَبْدُكَ وَأَنَا عَلَىٰ عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ أَعُوذُ بِكَ مِن شَرِّ مَا صَنَعْتُ أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ وَأَبُوءُ بِذَنبِي فَاغْفِرْ لِي فَإِنَّهُ لَا يَغْفِرُ الذُّنُوبَ إِلَّا أَنْتَ",
+        meaning: "O Allah, You are my Lord, none has the right to be worshipped except You, You created me and I am Your servant and I abide to Your covenant and promise as best I can, I take refuge in You from the evil of which I have committed. I acknowledge Your favour upon me and I acknowledge my sin, so forgive me, for verily none can forgive sin except You.",
+        target: 1,
+        reference: "Al-Bukhari 7/150",
+        virtue: "If you die that day, you will be among the people of Paradise",
+        hadith: "Whoever says this during the day with certainty and dies before evening, will be among the people of Paradise. (Al-Bukhari 6306)"
+      },
+      {
+        title: "La ilaha illa Allah (100x)",
+        arabic: "لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ",
+        meaning: "None has the right to be worshipped except Allah, alone, without partner, to Him belongs all sovereignty and praise",
+        target: 100,
+        reference: "Muslim 4/2071",
+        virtue: "Equal to freeing 10 slaves, 100 good deeds, removes 100 sins, shield from Shaytan",
+        hadith: "Whoever says this 100 times will get the reward of freeing 10 slaves. (Al-Bukhari 6040)"
+      },
+      {
+        title: "SubhanAllah wa bihamdihi (100x)",
+        arabic: "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
+        meaning: "Glory be to Allah and His Praise",
+        target: 100,
+        reference: "Muslim 4/2071",
+        virtue: "Light on the tongue, heavy on the scale, beloved to Allah",
+        hadith: "Whoever says this 100 times will be forgiven all his sins even if they were as much as the foam of the sea. (Al-Bukhari 6040)"
+      },
+      {
+        title: "SubhanAllah wa bihamdihi 'adada khalqihi",
+        arabic: "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ عَدَدَ خَلْقِهِ وَرِضَا نَفْسِهِ وَزِنَةَ عَرْشِهِ وَمِدَادَ كَلِمَاتِهِ",
+        meaning: "Glory be to Allah and praise Him by the number of His creation, His pleasure, the weight of His Throne, and the ink of His words",
+        target: 3,
+        reference: "Muslim 4/2090",
+        virtue: "Outweighs lengthy dhikr",
+        hadith: "These four words three times outweigh what you have said all day. (Muslim 2726)"
+      },
+      {
+        title: "Ya Hayyu Ya Qayyum",
+        arabic: "يَا حَيُّ يَا قَيُّومُ بِرَحْمَتِكَ أَسْتَغِيثُ أَصْلِحْ لِي شَأْنِي كُلَّهُ وَلَا تَكِلْنِي إِلَىٰ نَفْسِي طَرْفَةَ عَيْنٍ",
+        meaning: "O Ever Living, O Sustainer, by Your mercy I seek help, rectify for me all of my affairs and do not leave me to myself, even for the blink of an eye.",
+        target: 3,
+        reference: "An-Nasai | Al-Hakim",
+        virtue: "Rectifies all affairs",
+        hadith: "The Prophet ﷺ taught Fatima (ra) to recite this morning and evening. (An-Nasai)"
+      },
+      {
+        title: "Shahada Dua (4x)",
+        arabic: "اللَّهُمَّ إِنِّي أَصْبَحْتُ أُشْهِدُكَ وَأُشْهِدُ حَمَلَةَ عَرْشِكَ وَمَلَائِكَتَكَ وَجَمِيعَ خَلْقِكَ أَنَّكَ أَنْتَ اللَّهُ لَا إِلَٰهَ إِلَّا أَنْتَ وَحْدَكَ لَا شَرِيكَ لَكَ وَأَنَّ مُحَمَّدًا عَبْدُكَ وَرَسُولُكَ",
+        meaning: "O Allah, verily I have reached the morning and call on You, the bearers of Your throne, Your angels, and all of Your creation to witness that You are Allah, none has the right to be worshipped except You, alone, without partner and that Muhammad ﷺ is Your servant and Messenger.",
+        target: 4,
+        reference: "Abu Dawood 4/317",
+        virtue: "Emancipation from Hellfire",
+        hadith: "If anyone says this four times, Allah will emancipate him from Hell. (Abu Dawood 505)"
       }
     ]
   },
