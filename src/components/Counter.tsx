@@ -2,13 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { db } from '../lib/db';
 import { format } from 'date-fns';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { RotateCcw, Volume2, VolumeX, Flame, Calendar, Layers } from 'lucide-react';
+import { RotateCcw, Volume2, VolumeX, Flame, Calendar, Layers, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../hooks/useSound';
 import { calculateStreak, cn } from '../lib/utils';
 import { gregorianToHijri, getSpecialDay, getUpcomingSpecialDays } from '../lib/hijri';
 import { useAchievementTracker } from '../lib/useAchievementTracker';
 import { PRAYERS, getPrayerAdhkar, type PrayerName, type AdhkarItem } from '../lib/adhkar';
+import { PrayerTracker } from './PrayerTracker';
 
 const MULTI_COUNTER_PRESET = [
   { name: 'SubhanAllah', arabic: 'سُبْحَانَ اللَّهِ', target: 33 },
@@ -58,6 +59,7 @@ export function Counter() {
   const [prayerAdhkar, setPrayerAdhkar] = useState<AdhkarItem[]>([]);
   const [prayerCounts, setPrayerCounts] = useState<number[]>([]);
   const [activeAdhkarIndex, setActiveAdhkarIndex] = useState(0);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
 
   // Long-press manual entry
   const [showManualEntry, setShowManualEntry] = useState(false);
@@ -227,6 +229,33 @@ export function Counter() {
       const newCounts = [...prayerCounts];
       newCounts[activeAdhkarIndex]++;
       setPrayerCounts(newCounts);
+      
+      // Check if all adhkar are completed
+      const allCompleted = newCounts.every((count, idx) => count >= prayerAdhkar[idx].target);
+      const wasNotCompleted = prayerCounts.some((count, idx) => count < prayerAdhkar[idx].target);
+      
+      if (allCompleted && wasNotCompleted) {
+        // Save prayer completion to database
+        const existingCompletion = await db.prayerCompletions
+          .where({ prayer: prayerMode, dateStr: todayStr })
+          .first();
+        
+        if (!existingCompletion) {
+          await db.prayerCompletions.add({
+            prayer: prayerMode,
+            dateStr: todayStr,
+            completedAt: new Date(),
+            totalAdhkar: prayerAdhkar.length,
+            completedAdhkar: prayerAdhkar.length
+          });
+        }
+        
+        // Show completion modal
+        setShowCompletionModal(true);
+        if (navigator.vibrate) {
+          navigator.vibrate([100, 50, 100, 50, 100, 50, 200]);
+        }
+      }
       
       // Auto-advance when target reached
       if (newCounts[activeAdhkarIndex] >= prayerAdhkar[activeAdhkarIndex].target && activeAdhkarIndex < prayerAdhkar.length - 1) {
@@ -416,6 +445,18 @@ export function Counter() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Prayer Tracker Widget */}
+      <div className="w-full px-8 mt-4">
+        <PrayerTracker 
+          todayStr={todayStr}
+          onSelectPrayer={(prayer) => {
+            setPrayerMode(prayerMode === prayer ? null : prayer);
+            setMultiMode(false);
+          }}
+          activePrayer={prayerMode}
+        />
       </div>
 
       {/* Main Counter Area */}
@@ -637,6 +678,55 @@ export function Counter() {
                 <p className="text-[10px] text-slate-500 text-center mt-3">
                   Long-press the counter button to open this dialog
                 </p>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Prayer Completion Modal */}
+        <AnimatePresence>
+          {showCompletionModal && prayerMode && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-midnight-900 border border-emerald-500/30 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center"
+              >
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <Check size={32} className="text-emerald-400" />
+                </div>
+                <h3 className="font-serif text-2xl text-slate-100 mb-2">MashAllah! 🎉</h3>
+                <p className="text-slate-400 mb-4">
+                  You have completed all adhkar for <span className="text-gold-400 font-medium">{PRAYERS.find(p => p.id === prayerMode)?.name}</span> prayer
+                </p>
+                <div className="bg-slate-800/50 rounded-xl p-3 mb-4">
+                  <p className="text-sm text-slate-300">
+                    <span className="text-emerald-400 font-bold">{prayerAdhkar.length}</span> adhkar completed
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowCompletionModal(false);
+                      setPrayerMode(null);
+                    }}
+                    className="flex-1 py-3 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors"
+                  >
+                    Done
+                  </button>
+                  <button
+                    onClick={() => setShowCompletionModal(false)}
+                    className="flex-1 py-3 rounded-xl bg-gold-500 text-midnight-950 font-bold hover:bg-gold-400 transition-colors"
+                  >
+                    Continue
+                  </button>
+                </div>
               </motion.div>
             </motion.div>
           )}

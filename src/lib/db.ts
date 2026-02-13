@@ -5,7 +5,7 @@ interface Log {
   count: number;
   targetId?: number;
   timestamp: Date;
-  dateStr: string; // YYYY-MM-DD
+  dateStr: string;
 }
 
 interface Target {
@@ -16,14 +16,12 @@ interface Target {
   deadline?: Date;
   startTime?: Date;
   
-  // Reminder Settings
   reminderType?: 'one-off' | 'recurring';
-  reminderGap?: number; // Minutes late (for one-off)
+  reminderGap?: number;
   
-  // Recurring Settings
   frequency?: 'daily' | 'weekly';
-  reminderTime?: string; // "14:30"
-  reminderDays?: number[]; // [0-6] where 0 is Sunday
+  reminderTime?: string;
+  reminderDays?: number[];
   
   lastNotified?: Date;
   createdAt: Date;
@@ -51,15 +49,24 @@ interface UnlockedAchievement {
   unlockedAt: Date;
 }
 
+interface PrayerCompletion {
+  id?: number;
+  prayer: string;
+  dateStr: string;
+  completedAt: Date;
+  totalAdhkar: number;
+  completedAdhkar: number;
+}
+
 const db = new Dexie('IslamicCounterDB') as Dexie & {
   logs: EntityTable<Log, 'id'>;
   targets: EntityTable<Target, 'id'>;
   durations: EntityTable<Duration, 'id'>;
   collectionProgress: EntityTable<CollectionProgress, 'id'>;
   achievements: EntityTable<UnlockedAchievement, 'id'>;
+  prayerCompletions: EntityTable<PrayerCompletion, 'id'>;
 };
 
-// Schema declaration:
 db.version(1).stores({
   logs: '++id, targetId, dateStr, timestamp',
   targets: '++id, status, deadline'
@@ -74,7 +81,7 @@ db.version(3).stores({
 });
 
 db.version(4).stores({
-  durations: '++id, [dateStr+targetId]' // Compound index for fast lookups
+  durations: '++id, [dateStr+targetId]'
 });
 
 db.version(5).stores({
@@ -85,5 +92,9 @@ db.version(6).stores({
   achievements: '++id, achievementId, unlockedAt'
 });
 
-export type { Log, Target, Duration, CollectionProgress, UnlockedAchievement };
+db.version(7).stores({
+  prayerCompletions: '++id, [prayer+dateStr], prayer, dateStr'
+});
+
+export type { Log, Target, Duration, CollectionProgress, UnlockedAchievement, PrayerCompletion };
 export { db };

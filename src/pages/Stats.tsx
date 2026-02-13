@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../lib/db';
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Flame, Check, Circle } from 'lucide-react';
 import { 
   subDays, 
   format, 
@@ -15,6 +15,7 @@ import {
 } from 'date-fns';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PRAYERS } from '../lib/adhkar';
 
 type TimeRange = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
@@ -32,6 +33,7 @@ export function Stats() {
   const logs = useLiveQuery(() => db.logs.toArray());
   const targets = useLiveQuery(() => db.targets.toArray());
   const durations = useLiveQuery(() => db.durations.toArray());
+  const prayerCompletions = useLiveQuery(() => db.prayerCompletions.toArray());
 
   // Manual Entry State
   const [manualCount, setManualCount] = useState('');
@@ -160,10 +162,53 @@ export function Stats() {
   };
   
   // Quick Best Day Logic (Filtered)
-  const bestDayCount = filteredLogs.length > 0 ? Math.max(0, ...Object.values(filteredLogs.reduce((acc: any, l) => {
+  const bestDayCount = filteredLogs.length > 0 ? Math.max(0, ...Object.values(filteredLogs.reduce((acc: Record<string, number>, l) => {
     acc[l.dateStr] = (acc[l.dateStr] || 0) + l.count;
     return acc;
-  }, {}) as Record<string, number>)) : 0;
+  }, {}))) : 0;
+
+  // Prayer Streak Calculation
+  const calculatePrayerStreak = (): number => {
+    if (!prayerCompletions || prayerCompletions.length === 0) return 0;
+    
+    const allDates = [...new Set(prayerCompletions.map(c => c.dateStr))].sort().reverse();
+    let streak = 0;
+    const today = format(new Date(), 'yyyy-MM-dd');
+    
+    for (let i = 0; i < allDates.length; i++) {
+      const expectedDate = format(subDays(new Date(), i), 'yyyy-MM-dd');
+      const dateCompletions = prayerCompletions.filter(c => c.dateStr === expectedDate);
+      const uniquePrayers = new Set(dateCompletions.map(c => c.prayer));
+      
+      if (uniquePrayers.size === 5) {
+        streak++;
+      } else if (expectedDate !== today || i > 0) {
+        break;
+      }
+    }
+    return streak;
+  };
+
+  const prayerStreak = calculatePrayerStreak();
+
+  // Last 7 days prayer completion
+  const last7Days = Array.from({ length: 7 }).map((_, i) => {
+    const date = subDays(new Date(), 6 - i);
+    return format(date, 'yyyy-MM-dd');
+  });
+
+  const prayerStatsByDay = last7Days.map(dateStr => {
+    const dayCompletions = prayerCompletions?.filter(c => c.dateStr === dateStr) || [];
+    return {
+      dateStr,
+      dayName: format(new Date(dateStr), 'EEE'),
+      prayers: PRAYERS.map(p => ({
+        id: p.id,
+        name: p.name,
+        completed: dayCompletions.some(c => c.prayer === p.id)
+      }))
+    };
+  });
 
   return (
     <div className="px-6 py-8 space-y-8 pb-32">
@@ -264,6 +309,60 @@ export function Stats() {
         <StatCard title="Lifetime" value={totalLifetime.toLocaleString()} />
         <StatCard title="Time Spent" value={formatDuration(totalSeconds)} />
         <StatCard title="Best Day" value={bestDayCount.toLocaleString()} />
+      </div>
+
+      {/* Prayer Streak Card */}
+      {prayerStreak > 0 && (
+        <div className="glass-card p-4 rounded-2xl border border-white/5">
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-orange-500/10">
+              <Flame size={24} className="text-orange-400" />
+            </div>
+            <div>
+              <p className="text-2xl font-serif text-slate-100">{prayerStreak}</p>
+              <p className="text-xs text-slate-400">day streak completing all 5 prayers</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Weekly Prayer Tracker */}
+      <div className="glass-panel p-6 rounded-3xl border border-white/5">
+        <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4">Weekly Prayer Adhkar</h2>
+        
+        <div className="overflow-x-auto -mx-2 px-2">
+          <div className="min-w-[400px]">
+            {/* Header with prayer names */}
+            <div className="grid grid-cols-6 gap-2 mb-2">
+              <div></div>
+              {PRAYERS.map(prayer => (
+                <div key={prayer.id} className="text-center">
+                  <span className="text-[10px] font-arabic text-slate-400">{prayer.arabicName}</span>
+                </div>
+              ))}
+            </div>
+            
+            {/* Days */}
+            {prayerStatsByDay.map(day => (
+              <div key={day.dateStr} className="grid grid-cols-6 gap-2 mb-2">
+                <div className="text-xs text-slate-400 flex items-center">{day.dayName}</div>
+                {day.prayers.map(prayer => (
+                  <div key={prayer.id} className="flex justify-center">
+                    {prayer.completed ? (
+                      <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                        <Check size={12} className="text-emerald-400" />
+                      </div>
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-slate-800/50 flex items-center justify-center">
+                        <Circle size={12} className="text-slate-600" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Filter Tabs */}

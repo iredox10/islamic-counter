@@ -3,7 +3,7 @@ export interface Achievement {
   title: string;
   description: string;
   icon: string;
-  category: 'streak' | 'count' | 'goal' | 'time' | 'special';
+  category: 'streak' | 'count' | 'goal' | 'time' | 'special' | 'prayer';
   requirement: number;
   unlockedAt?: Date;
 }
@@ -185,6 +185,64 @@ export const ACHIEVEMENTS: Achievement[] = [
     icon: '🎉',
     category: 'special',
     requirement: 1
+  },
+
+  // Prayer achievements
+  {
+    id: 'first_fajr',
+    title: 'Early Bird',
+    description: 'Complete Fajr adhkar',
+    icon: '🌅',
+    category: 'prayer',
+    requirement: 1
+  },
+  {
+    id: 'first_maghrib',
+    title: 'Sunset Remembrance',
+    description: 'Complete Maghrib adhkar',
+    icon: '🌇',
+    category: 'prayer',
+    requirement: 1
+  },
+  {
+    id: 'all_5_prayers',
+    title: 'Five Daily',
+    description: 'Complete adhkar for all 5 prayers in one day',
+    icon: '🕌',
+    category: 'prayer',
+    requirement: 5
+  },
+  {
+    id: 'prayer_streak_7',
+    title: 'Week of Worship',
+    description: 'Complete all 5 prayers adhkar for 7 days in a row',
+    icon: '⭐',
+    category: 'prayer',
+    requirement: 7
+  },
+  {
+    id: 'prayer_streak_30',
+    title: 'Monthly Devotion',
+    description: 'Complete all 5 prayers adhkar for 30 days in a row',
+    icon: '🌙',
+    category: 'prayer',
+    requirement: 30
+  },
+  {
+    id: 'fajr_streak_30',
+    title: 'Dawn Discipline',
+    description: 'Complete Fajr adhkar for 30 days in a row',
+    icon: '☀️',
+    category: 'prayer',
+    requirement: 30
+  },
+  {
+    id: 'isha_streak_30',
+    title: 'Night Watch',
+    description: 'Complete Isha adhkar for 30 days in a row',
+    icon: '🌃',
+    category: 'prayer',
+    requirement: 30
   }
 ];
 
@@ -194,7 +252,15 @@ export function checkAchievements(
   completedGoals: number,
   sessionCount: number,
   timeOfDay: { isFajr: boolean; isAfterIsha: boolean; isFriday: boolean; isRamadan: boolean; isEid: boolean },
-  unlockedIds: string[]
+  unlockedIds: string[],
+  prayerStats?: { 
+    fajrCompleted?: boolean; 
+    maghribCompleted?: boolean; 
+    allFiveToday?: boolean;
+    prayerStreak?: number;
+    fajrStreak?: number;
+    ishaStreak?: number;
+  }
 ): Achievement[] {
   const newlyUnlocked: Achievement[] = [];
 
@@ -225,6 +291,16 @@ export function checkAchievements(
         if (achievement.id === 'friday_dhikr') qualified = timeOfDay.isFriday;
         if (achievement.id === 'ramadan_dhikr') qualified = timeOfDay.isRamadan;
         if (achievement.id === 'eid_celebration') qualified = timeOfDay.isEid;
+        break;
+      case 'prayer':
+        if (!prayerStats) break;
+        if (achievement.id === 'first_fajr') qualified = !!prayerStats.fajrCompleted;
+        if (achievement.id === 'first_maghrib') qualified = !!prayerStats.maghribCompleted;
+        if (achievement.id === 'all_5_prayers') qualified = !!prayerStats.allFiveToday;
+        if (achievement.id === 'prayer_streak_7') qualified = (prayerStats.prayerStreak || 0) >= 7;
+        if (achievement.id === 'prayer_streak_30') qualified = (prayerStats.prayerStreak || 0) >= 30;
+        if (achievement.id === 'fajr_streak_30') qualified = (prayerStats.fajrStreak || 0) >= 30;
+        if (achievement.id === 'isha_streak_30') qualified = (prayerStats.ishaStreak || 0) >= 30;
         break;
     }
 
