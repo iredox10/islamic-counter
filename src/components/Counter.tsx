@@ -291,8 +291,8 @@ export function Counter() {
         </button>
       </div>
 
-      {/* Multi-counter Mode Toggle */}
-      <div className="w-full px-8 mt-3">
+      {/* Hijri Date + Post-Salah Mode - Same Row */}
+      <div className="w-full px-8 mt-3 flex items-center justify-between">
         <button
           onClick={() => {
             setMultiMode(!multiMode);
@@ -311,24 +311,23 @@ export function Counter() {
           <Layers size={14} />
           <span>Post-Salah Mode</span>
         </button>
-      </div>
-
-      {/* Hijri Date */}
-      <div className="w-full px-8 mt-4">
-        <div className="flex items-center gap-2">
-          <Calendar size={14} className="text-emerald-400" />
-          <span className="text-xs text-emerald-400 font-medium">{hijriDate.formatted}</span>
-          {specialDay && (
-            <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">
-              {specialDay.name}
-            </span>
+        
+        <div className="flex flex-col items-end">
+          <div className="flex items-center gap-2">
+            <Calendar size={14} className="text-emerald-400" />
+            <span className="text-xs text-emerald-400 font-medium">{hijriDate.formatted}</span>
+            {specialDay && (
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">
+                {specialDay.name}
+              </span>
+            )}
+          </div>
+          {upcomingDays.length > 0 && !specialDay && (
+            <div className="text-[10px] text-slate-500">
+              Next: {upcomingDays[0].name} in {upcomingDays[0].daysUntil} days
+            </div>
           )}
         </div>
-        {upcomingDays.length > 0 && !specialDay && (
-          <div className="text-[10px] text-slate-500 mt-1">
-            Next: {upcomingDays[0].name} in {upcomingDays[0].daysUntil} days
-          </div>
-        )}
       </div>
 
       {/* Main Counter Area */}
