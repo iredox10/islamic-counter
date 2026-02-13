@@ -2,20 +2,65 @@ import { useState, useEffect, useRef } from 'react';
 import { db } from '../lib/db';
 import { format } from 'date-fns';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { RotateCcw, Volume2, VolumeX, Flame, Calendar, Layers, Check } from 'lucide-react';
+import { RotateCcw, Volume2, VolumeX, Flame, Calendar, Layers, Check, Circle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../hooks/useSound';
 import { calculateStreak, cn } from '../lib/utils';
 import { gregorianToHijri, getSpecialDay, getUpcomingSpecialDays } from '../lib/hijri';
 import { useAchievementTracker } from '../lib/useAchievementTracker';
 import { PRAYERS, getPrayerAdhkar, type PrayerName, type AdhkarItem } from '../lib/adhkar';
-import { PrayerTracker } from './PrayerTracker';
 
 const MULTI_COUNTER_PRESET = [
   { name: 'SubhanAllah', arabic: 'سُبْحَانَ اللَّهِ', target: 33 },
   { name: 'Alhamdulillah', arabic: 'الْحَمْدُ لِلَّهِ', target: 33 },
   { name: 'Allahu Akbar', arabic: 'اللَّهُ أَكْبَرُ', target: 33 },
 ];
+
+function DailyPrayerTracker({ 
+  todayStr, 
+  onSelectPrayer, 
+  activePrayer 
+}: { 
+  todayStr: string; 
+  onSelectPrayer: (prayer: PrayerName) => void; 
+  activePrayer: PrayerName | null;
+}) {
+  const todayCompletions = useLiveQuery(
+    () => db.prayerCompletions.where('dateStr').equals(todayStr).toArray(),
+    [todayStr]
+  );
+
+  const completedPrayers = new Set(todayCompletions?.map(c => c.prayer) || []);
+
+  return (
+    <div className="flex items-center justify-center gap-1.5">
+      {PRAYERS.map((prayer) => {
+        const isCompleted = completedPrayers.has(prayer.id);
+        const isActive = activePrayer === prayer.id;
+        
+        return (
+          <button
+            key={prayer.id}
+            onClick={() => onSelectPrayer(prayer.id)}
+            className={cn(
+              "flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all",
+              isActive && "bg-gold-500/20 border border-gold-500/30",
+              !isActive && isCompleted && "bg-emerald-500/10 border border-emerald-500/20",
+              !isActive && !isCompleted && "bg-slate-800/30 border border-white/5 hover:bg-slate-800/50"
+            )}
+          >
+            <span className="text-[10px] font-arabic text-slate-300">{prayer.arabicName}</span>
+            {isCompleted ? (
+              <Check size={12} className="text-emerald-400" />
+            ) : (
+              <Circle size={12} className={isActive ? "text-gold-400" : "text-slate-500"} />
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 export function Counter() {
   const [isRipple, setIsRipple] = useState(false);
@@ -393,7 +438,7 @@ export function Counter() {
             )}
           >
             <Layers size={14} />
-            <span>{prayerMode ? `After ${PRAYERS.find(p => p.id === prayerMode)?.name}` : 'Post-Salah Mode'}</span>
+            <span>{prayerMode ? `After ${PRAYERS.find(p => p.id === prayerMode)?.name}` : 'Post-Salah'}</span>
           </button>
           
           {/* Prayer Selector Dropdown */}
@@ -403,7 +448,7 @@ export function Counter() {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="absolute top-full left-0 mt-2 bg-midnight-900 border border-gold-500/20 rounded-xl shadow-xl z-50 overflow-hidden min-w-[160px]"
+                className="absolute top-full left-0 mt-2 bg-midnight-900 border border-gold-500/20 rounded-xl shadow-xl z-50 overflow-hidden min-w-[140px]"
               >
                 {PRAYERS.map((prayer) => (
                   <button
@@ -414,7 +459,7 @@ export function Counter() {
                       setShowPrayerSelector(false);
                     }}
                     className={cn(
-                      "w-full flex items-center gap-3 px-4 py-3 text-left transition-all",
+                      "w-full flex items-center gap-2 px-3 py-2 text-left transition-all",
                       prayerMode === prayer.id 
                         ? "bg-gold-500/20 text-gold-400" 
                         : "text-slate-300 hover:bg-slate-800/50"
@@ -431,7 +476,7 @@ export function Counter() {
         
         <div className="flex flex-col items-end">
           <div className="flex items-center gap-2">
-            <Calendar size={14} className="text-emerald-400" />
+            <Calendar size={12} className="text-emerald-400" />
             <span className="text-xs text-emerald-400 font-medium">{hijriDate.formatted}</span>
             {specialDay && (
               <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">
@@ -440,27 +485,15 @@ export function Counter() {
             )}
           </div>
           {upcomingDays.length > 0 && !specialDay && (
-            <div className="text-[10px] text-slate-500">
-              Next: {upcomingDays[0].name} in {upcomingDays[0].daysUntil} days
+            <div className="text-[10px] text-slate-500 mt-0.5">
+              Next: <span className="text-emerald-400">{upcomingDays[0].name}</span> in {upcomingDays[0].daysUntil} days
             </div>
           )}
         </div>
       </div>
 
-      {/* Prayer Tracker Widget */}
-      <div className="w-full px-8 mt-4">
-        <PrayerTracker 
-          todayStr={todayStr}
-          onSelectPrayer={(prayer) => {
-            setPrayerMode(prayerMode === prayer ? null : prayer);
-            setMultiMode(false);
-          }}
-          activePrayer={prayerMode}
-        />
-      </div>
-
       {/* Main Counter Area */}
-      <div className="flex-1 flex flex-col justify-center items-center -mt-16 w-full">
+      <div className="flex-1 flex flex-col justify-center items-center w-full">
         <div className="relative">
           
           {/* Progress Ring SVG */}
@@ -565,75 +598,86 @@ export function Counter() {
            </button>
          </div>
 
-{/* Indicator */}
-          <div className="mt-12 text-center space-y-2 opacity-60 h-10">
-            {prayerMode && prayerAdhkar.length > 0 ? (
-              <div className="flex items-center gap-2 overflow-x-auto max-w-[90vw] px-4 pb-2">
-                {prayerAdhkar.slice(0, 8).map((item, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setActiveAdhkarIndex(idx)}
-                    className={cn(
-                      "flex-shrink-0 flex flex-col items-center px-2 py-1 rounded-lg transition-all min-w-[50px]",
-                      activeAdhkarIndex === idx 
-                        ? "bg-gold-500/20 border border-gold-500/30" 
-                        : "bg-slate-800/30 border border-white/5"
-                    )}
-                  >
-                    <span className="text-[9px] text-gold-400/80 truncate max-w-[60px]">{item.title}</span>
-                    <span className={cn(
-                      "text-xs font-bold",
-                      (prayerCounts[idx] || 0) >= item.target ? "text-emerald-400" : "text-slate-300"
-                    )}>
-                      {prayerCounts[idx] || 0}/{item.target}
-                    </span>
-                  </button>
-                ))}
-                {prayerAdhkar.length > 8 && (
-                  <span className="text-[10px] text-slate-500">+{prayerAdhkar.length - 8} more</span>
+        {/* Prayer Progress Pills - compact inline display */}
+        {prayerMode && prayerAdhkar.length > 0 && (
+          <div className="flex items-center gap-1.5 mt-4 flex-wrap justify-center max-w-[85vw]">
+            {prayerAdhkar.map((item, idx) => (
+              <button
+                key={idx}
+                onClick={() => setActiveAdhkarIndex(idx)}
+                className={cn(
+                  "flex items-center gap-1 px-2 py-1 rounded-full text-[10px] transition-all",
+                  activeAdhkarIndex === idx 
+                    ? "bg-gold-500/20 text-gold-400 border border-gold-500/30" 
+                    : (prayerCounts[idx] || 0) >= item.target
+                      ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                      : "bg-slate-800/30 text-slate-400 border border-white/5"
                 )}
-              </div>
-            ) : multiMode ? (
-              <div className="flex items-center gap-3 justify-center">
-                {MULTI_COUNTER_PRESET.map((item, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setActiveCounterIndex(idx)}
-                    className={cn(
-                      "flex flex-col items-center px-3 py-2 rounded-lg transition-all",
-                      activeCounterIndex === idx 
-                        ? "bg-gold-500/20 border border-gold-500/30" 
-                        : "bg-slate-800/30 border border-white/5"
-                    )}
-                  >
-                    <span className="text-[10px] text-gold-400/80">{item.arabic}</span>
-                    <span className={cn(
-                      "text-sm font-bold",
-                      multiCounts[idx] >= item.target ? "text-emerald-400" : "text-slate-300"
-                    )}>
-                      {multiCounts[idx]}/{item.target}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 justify-center text-xs tracking-widest uppercase text-slate-400">
-                {activeTarget ? (
-                  <>
-                    <span>Goal Progress</span>
-                    <span className="w-12 h-[1px] bg-slate-700"></span>
-                    <span className="text-gold-500">{activeTarget.currentCount} / {activeTarget.targetCount}</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Cycle</span>
-                    <span className="w-12 h-[1px] bg-slate-700"></span>
-                    <span className="text-gold-500">{sessionCount % 33} / 33</span>
-                  </>
-                )}
-              </div>
-)}
+              >
+                {(prayerCounts[idx] || 0) >= item.target && <Check size={10} />}
+                <span>{item.title.substring(0, 12)}{item.title.length > 12 ? '...' : ''}</span>
+                <span className="opacity-60">{prayerCounts[idx] || 0}/{item.target}</span>
+              </button>
+            ))}
           </div>
+        )}
+
+        {/* Multi-mode Pills */}
+        {multiMode && (
+          <div className="flex items-center gap-2 mt-4 justify-center">
+            {MULTI_COUNTER_PRESET.map((item, idx) => (
+              <button
+                key={idx}
+                onClick={() => setActiveCounterIndex(idx)}
+                className={cn(
+                  "flex flex-col items-center px-3 py-2 rounded-lg transition-all",
+                  activeCounterIndex === idx 
+                    ? "bg-gold-500/20 border border-gold-500/30" 
+                    : "bg-slate-800/30 border border-white/5"
+                )}
+              >
+                <span className="text-[10px] text-gold-400/80">{item.arabic}</span>
+                <span className={cn(
+                  "text-sm font-bold",
+                  multiCounts[idx] >= item.target ? "text-emerald-400" : "text-slate-300"
+                )}>
+                  {multiCounts[idx]}/{item.target}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Cycle indicator for normal mode */}
+        {!prayerMode && !multiMode && (
+          <div className="flex items-center gap-2 justify-center text-xs tracking-widest uppercase text-slate-400 mt-4">
+            {activeTarget ? (
+              <>
+                <span>Goal</span>
+                <span className="w-8 h-[1px] bg-slate-700"></span>
+                <span className="text-gold-500">{activeTarget.currentCount}/{activeTarget.targetCount}</span>
+              </>
+            ) : (
+              <>
+                <span>Cycle</span>
+                <span className="w-8 h-[1px] bg-slate-700"></span>
+                <span className="text-gold-500">{sessionCount % 33}/33</span>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Daily Prayer Tracker - Bottom */}
+        <div className="mt-6 mb-4">
+          <DailyPrayerTracker 
+            todayStr={todayStr}
+            onSelectPrayer={(prayer) => {
+              setPrayerMode(prayerMode === prayer ? null : prayer);
+              setMultiMode(false);
+            }}
+            activePrayer={prayerMode}
+          />
+        </div>
 
         {/* Manual Entry Modal */}
         <AnimatePresence>
