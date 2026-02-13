@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { db } from '../lib/db';
 import { format } from 'date-fns';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { RotateCcw, Volume2, VolumeX, Flame, Calendar, Layers, Check, Circle } from 'lucide-react';
+import { RotateCcw, Volume2, VolumeX, Flame, Calendar, Layers, Check, Circle, ChevronUp, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSound } from '../hooks/useSound';
 import { calculateStreak, cn } from '../lib/utils';
@@ -87,6 +87,11 @@ export function Counter() {
     return localStorage.getItem('sound-enabled') === 'true';
   });
 
+  // Show/hide adhkar list
+  const [showAdhkarList, setShowAdhkarList] = useState(() => {
+    return localStorage.getItem('show-adhkar-list') !== 'false';
+  });
+
   // Multi-counter mode
   const [multiMode, setMultiMode] = useState(false);
   const [multiCounts, setMultiCounts] = useState(() => {
@@ -157,6 +162,10 @@ export function Counter() {
   useEffect(() => {
     localStorage.setItem('sound-enabled', String(soundEnabled));
   }, [soundEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem('show-adhkar-list', String(showAdhkarList));
+  }, [showAdhkarList]);
 
   // Timer Logic
   useEffect(() => {
@@ -600,25 +609,36 @@ export function Counter() {
 
         {/* Prayer Progress Pills - compact inline display */}
         {prayerMode && prayerAdhkar.length > 0 && (
-          <div className="flex items-center gap-1.5 mt-4 flex-wrap justify-center max-w-[85vw]">
-            {prayerAdhkar.map((item, idx) => (
-              <button
-                key={idx}
-                onClick={() => setActiveAdhkarIndex(idx)}
-                className={cn(
-                  "flex items-center gap-1 px-2 py-1 rounded-full text-[10px] transition-all",
-                  activeAdhkarIndex === idx 
-                    ? "bg-gold-500/20 text-gold-400 border border-gold-500/30" 
-                    : (prayerCounts[idx] || 0) >= item.target
-                      ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                      : "bg-slate-800/30 text-slate-400 border border-white/5"
-                )}
-              >
-                {(prayerCounts[idx] || 0) >= item.target && <Check size={10} />}
-                <span>{item.title.substring(0, 12)}{item.title.length > 12 ? '...' : ''}</span>
-                <span className="opacity-60">{prayerCounts[idx] || 0}/{item.target}</span>
-              </button>
-            ))}
+          <div className="flex flex-col items-center mt-4 gap-2">
+            <button
+              onClick={() => setShowAdhkarList(!showAdhkarList)}
+              className="flex items-center gap-1 text-[10px] text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              {showAdhkarList ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+              <span>{showAdhkarList ? 'Hide' : 'Show'} adhkar list</span>
+            </button>
+            {showAdhkarList && (
+              <div className="flex items-center gap-1.5 flex-wrap justify-center max-w-[85vw]">
+                {prayerAdhkar.map((item, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveAdhkarIndex(idx)}
+                    className={cn(
+                      "flex items-center gap-1 px-2 py-1 rounded-full text-[10px] transition-all",
+                      activeAdhkarIndex === idx 
+                        ? "bg-gold-500/20 text-gold-400 border border-gold-500/30" 
+                        : (prayerCounts[idx] || 0) >= item.target
+                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                          : "bg-slate-800/30 text-slate-400 border border-white/5"
+                    )}
+                  >
+                    {(prayerCounts[idx] || 0) >= item.target && <Check size={10} />}
+                    <span>{item.title.substring(0, 12)}{item.title.length > 12 ? '...' : ''}</span>
+                    <span className="opacity-60">{prayerCounts[idx] || 0}/{item.target}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
