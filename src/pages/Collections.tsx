@@ -4,24 +4,34 @@ import { db } from '../lib/db';
 import { ADHKAR_COLLECTIONS, type AdhkarCollection } from '../lib/adhkar';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sun, Moon, Hand, Bed, Sparkles, ChevronRight, Check, X, Languages } from 'lucide-react';
+import { Sun, Moon, Hand, Bed, Sparkles, ChevronRight, Check, X, Languages, Sunrise, Sunset, CloudSun, CloudMoon } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useSearchParams } from 'react-router-dom';
 
-const categoryIcons = {
+const categoryIcons: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   'morning': Sun,
   'evening': Moon,
   'post-prayer': Hand,
   'sleep': Bed,
-  'general': Sparkles
+  'general': Sparkles,
+  'fajr': Sunrise,
+  'dhuhr': Sun,
+  'asr': CloudSun,
+  'maghrib': Sunset,
+  'isha': CloudMoon
 };
 
-const categoryColors = {
+const categoryColors: Record<string, string> = {
   'morning': 'text-amber-400 bg-amber-500/10',
   'evening': 'text-indigo-400 bg-indigo-500/10',
   'post-prayer': 'text-emerald-400 bg-emerald-500/10',
   'sleep': 'text-purple-400 bg-purple-500/10',
-  'general': 'text-gold-400 bg-gold-500/10'
+  'general': 'text-gold-400 bg-gold-500/10',
+  'fajr': 'text-amber-300 bg-amber-500/10',
+  'dhuhr': 'text-yellow-400 bg-yellow-500/10',
+  'asr': 'text-orange-400 bg-orange-500/10',
+  'maghrib': 'text-rose-400 bg-rose-500/10',
+  'isha': 'text-indigo-400 bg-indigo-500/10'
 };
 
 export function Collections() {

@@ -12,8 +12,17 @@ export interface AdhkarCollection {
   id: string;
   title: string;
   description: string;
-  category: 'morning' | 'evening' | 'post-prayer' | 'sleep' | 'general';
+  category: 'morning' | 'evening' | 'post-prayer' | 'sleep' | 'general' | 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
   items: AdhkarItem[];
+}
+
+export type PrayerName = 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
+
+export interface PrayerInfo {
+  id: PrayerName;
+  name: string;
+  arabicName: string;
+  time: string;
 }
 
 export const ADHKAR_PRESETS: AdhkarItem[] = [
@@ -82,6 +91,214 @@ export const ADHKAR_PRESETS: AdhkarItem[] = [
     hadith: "'La hawla wa la quwwata illa billah' is a treasure from the treasures of Paradise. (Bukhari)"
   }
 ];
+
+export const PRAYERS: PrayerInfo[] = [
+  { id: 'fajr', name: 'Fajr', arabicName: 'الفجر', time: 'Dawn' },
+  { id: 'dhuhr', name: 'Dhuhr', arabicName: 'الظهر', time: 'Noon' },
+  { id: 'asr', name: 'Asr', arabicName: 'العصر', time: 'Afternoon' },
+  { id: 'maghrib', name: 'Maghrib', arabicName: 'المغرب', time: 'Sunset' },
+  { id: 'isha', name: 'Isha', arabicName: 'العشاء', time: 'Night' },
+];
+
+const COMMON_POST_SALAH: AdhkarItem[] = [
+  {
+    title: "Astaghfirullah",
+    arabic: "أَسْتَغْفِرُ اللَّهَ",
+    meaning: "I seek forgiveness from Allah",
+    target: 3,
+    reference: "After every prayer",
+    hadith: "The Prophet ﷺ would say this three times after every obligatory prayer. (Muslim)"
+  },
+  {
+    title: "Allahumma antas-salam",
+    arabic: "اللَّهُمَّ أَنْتَ السَّلَامُ وَمِنْكَ السَّلَامُ تَبَارَكْتَ يَا ذَا الْجَلَالِ وَالْإِكْرَامِ",
+    meaning: "O Allah, You are Peace and from You is peace. Blessed are You, O Owner of Majesty and Honor",
+    target: 1,
+    hadith: "The Prophet ﷺ would say this immediately after the Taslim. (Muslim)"
+  },
+  {
+    title: "SubhanAllah",
+    arabic: "سُبْحَانَ اللَّهِ",
+    meaning: "Glory be to Allah",
+    target: 33,
+    hadith: "Whoever says SubhanAllah 33 times after every prayer, his sins will be forgiven even if they are like the foam of the sea. (Muslim)"
+  },
+  {
+    title: "Alhamdulillah",
+    arabic: "الْحَمْدُ لِلَّهِ",
+    meaning: "Praise be to Allah",
+    target: 33,
+    hadith: "Whoever says Alhamdulillah 33 times after every prayer will have all his sins forgiven. (Muslim)"
+  },
+  {
+    title: "Allahu Akbar",
+    arabic: "اللَّهُ أَكْبَرُ",
+    meaning: "Allah is the Greatest",
+    target: 33,
+    hadith: "Whoever says Allahu Akbar 33 times after every prayer, his sins will be forgiven. (Muslim)"
+  },
+  {
+    title: "Ayat al-Kursi",
+    arabic: "اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ لَّهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ مَن ذَا الَّذِي يَشْفَعُ عِندَهُ إِلَّا بِإِذْنِهِ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ وَلَا يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلَّا بِمَا شَاءَ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ وَلَا يَئُودُهُ حِفْظُهُمَا وَهُوَ الْعَلِيُّ الْعَظِيمُ",
+    meaning: "Allah - there is no deity except Him, the Ever-Living, the Sustainer of existence...",
+    target: 1,
+    virtue: "Nothing stands between him and Paradise except death",
+    hadith: "Whoever recites Ayat al-Kursi after every prescribed prayer, nothing stands between him and Paradise except death. (An-Nasai)"
+  },
+  {
+    title: "La ilaha illa Allah",
+    arabic: "لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ",
+    meaning: "None has the right to be worshipped except Allah, alone, without partner, to Him belongs all sovereignty and praise, and He is over all things omnipotent",
+    target: 1,
+    hadith: "Whoever says this after every prayer will have his sins forgiven. (Muslim)"
+  }
+];
+
+const FAJR_SPECIFIC: AdhkarItem[] = [
+  {
+    title: "Protection Dua - Bismillah",
+    arabic: "بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ",
+    meaning: "In the name of Allah with whose name nothing is harmed on earth nor in the heavens, and He is The All-Hearing, The All-Knowing",
+    target: 3,
+    reference: "Recite 3 times after Fajr and Maghrib",
+    virtue: "Protection from all harm until evening",
+    hadith: "Whoever recites this three times in the morning will not be stricken with sudden affliction until evening. (Abu Dawood 5088)"
+  },
+  {
+    title: "Morning Dua - Sovereignty",
+    arabic: "أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ وَالْحَمْدُ لِلَّهِ لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ",
+    meaning: "We have reached the morning and at this very time unto Allah belongs all sovereignty, and all praise is for Allah...",
+    target: 1,
+    reference: "Specific for Fajr",
+    virtue: "Complete morning supplication taught by the Prophet ﷺ",
+    hadith: "The Prophet ﷺ used to supplicate this every morning after Fajr. (Muslim 2723)"
+  },
+  {
+    title: "Allahumma bika asbahna",
+    arabic: "اللَّهُمَّ بِكَ أَصْبَحْنَا وَبِكَ أَمْسَيْنَا وَبِكَ نَحْيَا وَبِكَ نَمُوتُ وَإِلَيْكَ النُّشُورُ",
+    meaning: "O Allah, by Your leave we have reached the morning, by Your leave we live and die, and unto You is our return",
+    target: 1,
+    reference: "Morning after Fajr",
+    hadith: "The Messenger ﷺ taught his companions to recite this morning and evening. (At-Tirmidhi 3391)"
+  },
+  {
+    title: "Surah Al-Ikhlas",
+    arabic: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ قُلْ هُوَ اللَّهُ أَحَدٌ ۝ اللَّهُ الصَّمَدُ ۝ لَمْ يَلِدْ وَلَمْ يُولَدْ ۝ وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ",
+    meaning: "Say: He is Allah, the One. Allah, the Eternal Refuge. He neither begets nor is born, nor is there to Him any equivalent.",
+    target: 3,
+    reference: "Recite 3 times after Fajr and Maghrib",
+    virtue: "Protection from all evil until evening",
+    hadith: "Recite Surat Al-Ikhlas, Al-Falaq and An-Nas three times at dawn and dusk - it will suffice you in all respects. (Abu Dawood 5082)"
+  },
+  {
+    title: "Surah Al-Falaq",
+    arabic: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ ۝ مِن شَرِّ مَا خَلَقَ ۝ وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ ۝ وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ ۝ وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ",
+    meaning: "Say: I seek refuge in the Lord of daybreak, from the evil of that which He created...",
+    target: 3,
+    reference: "Recite 3 times after Fajr and Maghrib",
+    virtue: "Protection from all evil",
+    hadith: "The Prophet ﷺ would recite these three surahs for protection. (Al-Bukhari)"
+  },
+  {
+    title: "Surah An-Nas",
+    arabic: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ قُلْ أَعُوذُ بِرَبِّ النَّاسِ ۝ مَلِكِ النَّاسِ ۝ إِلَٰهِ النَّاسِ ۝ مِن شَرِّ الْوَسْوَاسِ الْخَنَّاسِ ۝ الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ ۝ مِنَ الْجِنَّةِ وَالنَّاسِ",
+    meaning: "Say: I seek refuge in the Lord of mankind...",
+    target: 3,
+    reference: "Recite 3 times after Fajr and Maghrib",
+    virtue: "Protection from whispers of jinn and mankind",
+    hadith: "The Prophet ﷺ would recite these three surahs, blow into his hands, and wipe over his body. (Al-Bukhari)"
+  },
+  {
+    title: "Sayyidul Istighfar",
+    arabic: "اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَٰهَ إِلَّا أَنْتَ خَلَقْتَنِي وَأَنَا عَبْدُكَ وَأَنَا عَلَىٰ عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ أَعُوذُ بِكَ مِن شَرِّ مَا صَنَعْتُ أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ وَأَبُوءُ بِذَنبِي فَاغْفِرْ لِي فَإِنَّهُ لَا يَغْفِرُ الذُّنُوبَ إِلَّا أَنْتَ",
+    meaning: "O Allah, You are my Lord, none has the right to be worshipped except You, You created me and I am Your servant...",
+    target: 1,
+    reference: "Best recited after Fajr",
+    virtue: "If you die that day, you will be among the people of Paradise",
+    hadith: "Whoever says this during the day with certainty and dies before evening, will be among the people of Paradise. (Al-Bukhari 6306)"
+  }
+];
+
+const MAGHRIB_SPECIFIC: AdhkarItem[] = [
+  {
+    title: "Protection Dua - Bismillah",
+    arabic: "بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ",
+    meaning: "In the name of Allah with whose name nothing is harmed on earth nor in the heavens, and He is The All-Hearing, The All-Knowing",
+    target: 3,
+    reference: "Recite 3 times after Fajr and Maghrib",
+    virtue: "Protection from all harm until morning",
+    hadith: "Whoever recites this three times in the evening will not be stricken with sudden affliction until morning. (Abu Dawood 5088)"
+  },
+  {
+    title: "Evening Dua - Sovereignty",
+    arabic: "أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ وَالْحَمْدُ لِلَّهِ لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَىٰ كُلِّ شَيْءٍ قَدِيرٌ",
+    meaning: "We have reached the evening and at this very time unto Allah belongs all sovereignty...",
+    target: 1,
+    reference: "Specific for Maghrib",
+    virtue: "Complete evening supplication taught by the Prophet ﷺ",
+    hadith: "The Prophet ﷺ used to supplicate this every evening after Maghrib. (Muslim 2723)"
+  },
+  {
+    title: "Allahumma bika amsayna",
+    arabic: "اللَّهُمَّ بِكَ أَمْسَيْنَا وَبِكَ أَصْبَحْنَا وَبِكَ نَحْيَا وَبِكَ نَمُوتُ وَإِلَيْكَ الْمَصِيرُ",
+    meaning: "O Allah, by Your leave we have reached the evening and by Your leave we have reached the morning...",
+    target: 1,
+    reference: "Evening after Maghrib",
+    hadith: "The Messenger ﷺ taught his companions to recite this morning and evening. (At-Tirmidhi 3391)"
+  },
+  {
+    title: "Surah Al-Ikhlas",
+    arabic: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ قُلْ هُوَ اللَّهُ أَحَدٌ ۝ اللَّهُ الصَّمَدُ ۝ لَمْ يَلِدْ وَلَمْ يُولَدْ ۝ وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ",
+    meaning: "Say: He is Allah, the One...",
+    target: 3,
+    reference: "Recite 3 times after Fajr and Maghrib",
+    virtue: "Protection from all evil until morning",
+    hadith: "Recite Surat Al-Ikhlas, Al-Falaq and An-Nas three times at dawn and dusk - it will suffice you in all respects. (Abu Dawood 5082)"
+  },
+  {
+    title: "Surah Al-Falaq",
+    arabic: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ ۝ مِن شَرِّ مَا خَلَقَ ۝ وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ ۝ وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ ۝ وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ",
+    meaning: "Say: I seek refuge in the Lord of daybreak...",
+    target: 3,
+    reference: "Recite 3 times after Fajr and Maghrib",
+    virtue: "Protection from all evil throughout the night",
+    hadith: "The Prophet ﷺ would recite these three surahs for protection. (Al-Bukhari)"
+  },
+  {
+    title: "Surah An-Nas",
+    arabic: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ قُلْ أَعُوذُ بِرَبِّ النَّاسِ ۝ مَلِكِ النَّاسِ ۝ إِلَٰهِ النَّاسِ ۝ مِن شَرِّ الْوَسْوَاسِ الْخَنَّاسِ ۝ الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ ۝ مِنَ الْجِنَّةِ وَالنَّاسِ",
+    meaning: "Say: I seek refuge in the Lord of mankind...",
+    target: 3,
+    reference: "Recite 3 times after Fajr and Maghrib",
+    virtue: "Protection from whispers of jinn and mankind throughout the night",
+    hadith: "The Prophet ﷺ would recite these three surahs, blow into his hands, and wipe over his body. (Al-Bukhari)"
+  },
+  {
+    title: "Sayyidul Istighfar",
+    arabic: "اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَٰهَ إِلَّا أَنْتَ خَلَقْتَنِي وَأَنَا عَبْدُكَ وَأَنَا عَلَىٰ عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ أَعُوذُ بِكَ مِن شَرِّ مَا صَنَعْتُ أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ وَأَبُوءُ بِذَنبِي فَاغْفِرْ لِي فَإِنَّهُ لَا يَغْفِرُ الذُّنُوبَ إِلَّا أَنْتَ",
+    meaning: "O Allah, You are my Lord, none has the right to be worshipped except You...",
+    target: 1,
+    reference: "Best recited after Maghrib",
+    virtue: "If you die that night, you will be among the people of Paradise",
+    hadith: "Whoever says this at night with certainty and dies before morning, will be among the people of Paradise. (Al-Bukhari 6306)"
+  }
+];
+
+export function getPrayerAdhkar(prayer: PrayerName): AdhkarItem[] {
+  const common = [...COMMON_POST_SALAH];
+  
+  switch (prayer) {
+    case 'fajr':
+      return [...common, ...FAJR_SPECIFIC];
+    case 'maghrib':
+      return [...common, ...MAGHRIB_SPECIFIC];
+    case 'dhuhr':
+    case 'asr':
+    case 'isha':
+    default:
+      return common;
+  }
+}
 
 export const ADHKAR_COLLECTIONS: AdhkarCollection[] = [
   {

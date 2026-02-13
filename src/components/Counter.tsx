@@ -8,6 +8,7 @@ import { useSound } from '../hooks/useSound';
 import { calculateStreak, cn } from '../lib/utils';
 import { gregorianToHijri, getSpecialDay, getUpcomingSpecialDays } from '../lib/hijri';
 import { useAchievementTracker } from '../lib/useAchievementTracker';
+import { PRAYERS, getPrayerAdhkar, type PrayerName, type AdhkarItem } from '../lib/adhkar';
 
 const MULTI_COUNTER_PRESET = [
   { name: 'SubhanAllah', arabic: 'سُبْحَانَ اللَّهِ', target: 33 },
@@ -48,6 +49,16 @@ export function Counter() {
   });
   const [activeCounterIndex, setActiveCounterIndex] = useState(0);
 
+  // Prayer-specific mode
+  const [prayerMode, setPrayerMode] = useState<PrayerName | null>(() => {
+    const saved = localStorage.getItem('prayer-mode');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [showPrayerSelector, setShowPrayerSelector] = useState(false);
+  const [prayerAdhkar, setPrayerAdhkar] = useState<AdhkarItem[]>([]);
+  const [prayerCounts, setPrayerCounts] = useState<number[]>([]);
+  const [activeAdhkarIndex, setActiveAdhkarIndex] = useState(0);
+
   // Long-press manual entry
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [manualCount, setManualCount] = useState('');
@@ -55,6 +66,32 @@ export function Counter() {
 
   // Auto-reset at midnight
   const autoReset = localStorage.getItem('auto-reset') === 'true';
+
+  // Initialize prayer adhkar when prayer mode changes
+  useEffect(() => {
+    if (prayerMode) {
+      const adhkar = getPrayerAdhkar(prayerMode);
+      setPrayerAdhkar(adhkar);
+      const savedCounts = localStorage.getItem(`prayer-counts-${prayerMode}`);
+      setPrayerCounts(savedCounts ? JSON.parse(savedCounts) : adhkar.map(() => 0));
+      const savedIndex = localStorage.getItem(`prayer-index-${prayerMode}`);
+      setActiveAdhkarIndex(savedIndex ? parseInt(savedIndex) : 0);
+      localStorage.setItem('prayer-mode', JSON.stringify(prayerMode));
+    } else {
+      setPrayerAdhkar([]);
+      setPrayerCounts([]);
+      setActiveAdhkarIndex(0);
+      localStorage.removeItem('prayer-mode');
+    }
+  }, [prayerMode]);
+
+  // Persist prayer counts
+  useEffect(() => {
+    if (prayerMode && prayerCounts.length > 0) {
+      localStorage.setItem(`prayer-counts-${prayerMode}`, JSON.stringify(prayerCounts));
+      localStorage.setItem(`prayer-index-${prayerMode}`, String(activeAdhkarIndex));
+    }
+  }, [prayerCounts, activeAdhkarIndex, prayerMode]);
 
   // Check for midnight reset
   useEffect(() => {
@@ -116,11 +153,13 @@ export function Counter() {
   }, [sessionCount, activeTargetId]);
 
   // Ring Progress Logic
-  const progressPercent = multiMode
-    ? Math.min(100, (multiCounts[activeCounterIndex] / MULTI_COUNTER_PRESET[activeCounterIndex].target) * 100)
-    : activeTarget 
-      ? Math.min(100, (activeTarget.currentCount / activeTarget.targetCount) * 100)
-      : (sessionCount % 33) / 33 * 100;
+  const progressPercent = prayerMode && prayerAdhkar.length > 0
+    ? Math.min(100, (prayerCounts[activeAdhkarIndex] || 0) / prayerAdhkar[activeAdhkarIndex].target * 100)
+    : multiMode
+      ? Math.min(100, (multiCounts[activeCounterIndex] / MULTI_COUNTER_PRESET[activeCounterIndex].target) * 100)
+      : activeTarget 
+        ? Math.min(100, (activeTarget.currentCount / activeTarget.targetCount) * 100)
+        : (sessionCount % 33) / 33 * 100;
 
   // Live query for stats
   const todaysLogs = useLiveQuery(() => 
@@ -150,18 +189,24 @@ export function Counter() {
   const upcomingDays = getUpcomingSpecialDays(hijriDate, 2);
 
   const handleTap = async () => {
-    const currentCount = multiMode ? multiCounts[activeCounterIndex] + 1 : sessionCount + 1;
+    let currentCount = sessionCount + 1;
+    
+    if (prayerMode && prayerAdhkar.length > 0) {
+      currentCount = (prayerCounts[activeAdhkarIndex] || 0) + 1;
+    } else if (multiMode) {
+      currentCount = multiCounts[activeCounterIndex] + 1;
+    }
     
     // Milestone vibration patterns
     if (navigator.vibrate) {
       if (currentCount === 33) {
-        navigator.vibrate([30, 50, 30, 50, 30]); // Triple pulse for 33
+        navigator.vibrate([30, 50, 30, 50, 30]);
       } else if (currentCount === 100) {
-        navigator.vibrate([50, 100, 50, 100, 50, 100, 50]); // Quadruple pulse for 100
+        navigator.vibrate([50, 100, 50, 100, 50, 100, 50]);
       } else if (currentCount === 1000) {
-        navigator.vibrate([100, 100, 100, 100, 100, 100, 100]); // Celebration pattern for 1000
+        navigator.vibrate([100, 100, 100, 100, 100, 100, 100]);
       } else {
-        navigator.vibrate(15); // Normal tap
+        navigator.vibrate(15);
       }
     }
     
@@ -170,23 +215,31 @@ export function Counter() {
     setIsRipple(true);
     setTimeout(() => setIsRipple(false), 400);
 
-    // Timer Logic
     if (!isActive) setIsActive(true);
     
-    // Reset Idle Timer (60s)
     if (idleTimeoutRef.current) clearTimeout(idleTimeoutRef.current);
     idleTimeoutRef.current = setTimeout(() => {
       setIsActive(false);
     }, 60000);
 
+    // Prayer mode
+    if (prayerMode && prayerAdhkar.length > 0) {
+      const newCounts = [...prayerCounts];
+      newCounts[activeAdhkarIndex]++;
+      setPrayerCounts(newCounts);
+      
+      // Auto-advance when target reached
+      if (newCounts[activeAdhkarIndex] >= prayerAdhkar[activeAdhkarIndex].target && activeAdhkarIndex < prayerAdhkar.length - 1) {
+        setActiveAdhkarIndex(activeAdhkarIndex + 1);
+      }
+    }
     // Multi-counter mode
-    if (multiMode) {
+    else if (multiMode) {
       const newCounts = [...multiCounts];
       newCounts[activeCounterIndex]++;
       setMultiCounts(newCounts);
       localStorage.setItem('multi-counter-state', JSON.stringify(newCounts));
       
-      // Auto-advance when target reached
       if (newCounts[activeCounterIndex] >= MULTI_COUNTER_PRESET[activeCounterIndex].target && activeCounterIndex < 2) {
         setActiveCounterIndex(activeCounterIndex + 1);
       }
@@ -194,7 +247,6 @@ export function Counter() {
       setSessionCount((c: number) => c + 1);
     }
 
-    // DB Updates
     await db.logs.add({
       count: 1,
       timestamp: new Date(),
@@ -202,7 +254,6 @@ export function Counter() {
       targetId: activeTargetId || undefined
     });
 
-    // Update Target if active
     if (activeTargetId && activeTarget) {
       await db.targets.update(activeTargetId, {
         currentCount: (activeTarget.currentCount || 0) + 1
@@ -211,11 +262,20 @@ export function Counter() {
   };
 
   const handleResetSession = async () => {
+    if (prayerMode && prayerAdhkar.length > 0) {
+      if (confirm('Reset all adhkar for this prayer?')) {
+        const newCounts = prayerAdhkar.map(() => 0);
+        setPrayerCounts(newCounts);
+        setActiveAdhkarIndex(0);
+        localStorage.setItem(`prayer-counts-${prayerMode}`, JSON.stringify(newCounts));
+        localStorage.setItem(`prayer-index-${prayerMode}`, '0');
+      }
+      return;
+    }
+    
     if (confirm('Reset this session?')) {
       setSessionCount(0);
       
-      // If there is an active target, we must also reset its progress in the DB
-      // so the ring (which depends on target.currentCount) resets too.
       if (activeTargetId) {
         await db.targets.update(activeTargetId, {
           currentCount: 0
@@ -293,24 +353,52 @@ export function Counter() {
 
       {/* Hijri Date + Post-Salah Mode - Same Row */}
       <div className="w-full px-8 mt-3 flex items-center justify-between">
-        <button
-          onClick={() => {
-            setMultiMode(!multiMode);
-            if (!multiMode) {
-              setMultiCounts([0, 0, 0]);
-              setActiveCounterIndex(0);
-            }
-          }}
-          className={cn(
-            "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs transition-all",
-            multiMode 
-              ? "bg-gold-500/20 text-gold-400 border border-gold-500/30" 
-              : "bg-slate-800/30 text-slate-500 border border-white/5"
-          )}
-        >
-          <Layers size={14} />
-          <span>Post-Salah Mode</span>
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setShowPrayerSelector(!showPrayerSelector)}
+            className={cn(
+              "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs transition-all",
+              prayerMode 
+                ? "bg-gold-500/20 text-gold-400 border border-gold-500/30" 
+                : "bg-slate-800/30 text-slate-500 border border-white/5"
+            )}
+          >
+            <Layers size={14} />
+            <span>{prayerMode ? `After ${PRAYERS.find(p => p.id === prayerMode)?.name}` : 'Post-Salah Mode'}</span>
+          </button>
+          
+          {/* Prayer Selector Dropdown */}
+          <AnimatePresence>
+            {showPrayerSelector && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="absolute top-full left-0 mt-2 bg-midnight-900 border border-gold-500/20 rounded-xl shadow-xl z-50 overflow-hidden min-w-[160px]"
+              >
+                {PRAYERS.map((prayer) => (
+                  <button
+                    key={prayer.id}
+                    onClick={() => {
+                      setPrayerMode(prayerMode === prayer.id ? null : prayer.id);
+                      setMultiMode(false);
+                      setShowPrayerSelector(false);
+                    }}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-4 py-3 text-left transition-all",
+                      prayerMode === prayer.id 
+                        ? "bg-gold-500/20 text-gold-400" 
+                        : "text-slate-300 hover:bg-slate-800/50"
+                    )}
+                  >
+                    <span className="font-arabic text-sm">{prayer.arabicName}</span>
+                    <span className="text-xs">{prayer.name}</span>
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
         
         <div className="flex flex-col items-end">
           <div className="flex items-center gap-2">
@@ -390,9 +478,22 @@ export function Counter() {
               )}
             </AnimatePresence>
 
-{/* Display Logic: If target, show progress/total. If not, show session count. */}
-             <div className="flex flex-col items-center">
-                {multiMode ? (
+{/* Display Logic */}
+              <div className="flex flex-col items-center">
+                {prayerMode && prayerAdhkar.length > 0 ? (
+                  <>
+                    <span className="text-sm text-gold-400/70 font-arabic text-center px-4" dir="rtl">
+                      {prayerAdhkar[activeAdhkarIndex]?.arabic?.substring(0, 50)}
+                      {prayerAdhkar[activeAdhkarIndex]?.arabic && prayerAdhkar[activeAdhkarIndex].arabic.length > 50 && '...'}
+                    </span>
+                    <span className="font-serif text-7xl text-gold-400 drop-shadow-2xl select-none tabular-nums tracking-tighter">
+                      {prayerCounts[activeAdhkarIndex] || 0}
+                    </span>
+                    <span className="text-xs text-slate-500 mt-1">
+                      / {prayerAdhkar[activeAdhkarIndex]?.target}
+                    </span>
+                  </>
+                ) : multiMode ? (
                   <>
                     <span className="text-lg text-gold-400/70 font-arabic" dir="rtl">
                       {MULTI_COUNTER_PRESET[activeCounterIndex].arabic}
@@ -411,19 +512,47 @@ export function Counter() {
                     </span>
                   </>
                 )}
-             </div>
+              </div>
 
-             <span className="text-slate-500 text-xs tracking-[0.3em] font-medium uppercase mt-2 group-hover:text-gold-500/50 transition-colors truncate max-w-48">
-               {multiMode 
-                 ? MULTI_COUNTER_PRESET[activeCounterIndex].name 
-                 : activeTarget?.title || 'Tasbih'}
-             </span>
-          </button>
-        </div>
+              <span className="text-slate-500 text-xs tracking-[0.3em] font-medium uppercase mt-2 group-hover:text-gold-500/50 transition-colors truncate max-w-48">
+                {prayerMode && prayerAdhkar.length > 0 
+                  ? prayerAdhkar[activeAdhkarIndex]?.title
+                  : multiMode 
+                    ? MULTI_COUNTER_PRESET[activeCounterIndex].name 
+                    : activeTarget?.title || 'Tasbih'}
+              </span>
+           </button>
+         </div>
 
 {/* Indicator */}
-         <div className="mt-12 text-center space-y-2 opacity-60 h-10">
-            {multiMode ? (
+          <div className="mt-12 text-center space-y-2 opacity-60 h-10">
+            {prayerMode && prayerAdhkar.length > 0 ? (
+              <div className="flex items-center gap-2 overflow-x-auto max-w-[90vw] px-4 pb-2">
+                {prayerAdhkar.slice(0, 8).map((item, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveAdhkarIndex(idx)}
+                    className={cn(
+                      "flex-shrink-0 flex flex-col items-center px-2 py-1 rounded-lg transition-all min-w-[50px]",
+                      activeAdhkarIndex === idx 
+                        ? "bg-gold-500/20 border border-gold-500/30" 
+                        : "bg-slate-800/30 border border-white/5"
+                    )}
+                  >
+                    <span className="text-[9px] text-gold-400/80 truncate max-w-[60px]">{item.title}</span>
+                    <span className={cn(
+                      "text-xs font-bold",
+                      (prayerCounts[idx] || 0) >= item.target ? "text-emerald-400" : "text-slate-300"
+                    )}>
+                      {prayerCounts[idx] || 0}/{item.target}
+                    </span>
+                  </button>
+                ))}
+                {prayerAdhkar.length > 8 && (
+                  <span className="text-[10px] text-slate-500">+{prayerAdhkar.length - 8} more</span>
+                )}
+              </div>
+            ) : multiMode ? (
               <div className="flex items-center gap-3 justify-center">
                 {MULTI_COUNTER_PRESET.map((item, idx) => (
                   <button
