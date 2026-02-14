@@ -4,7 +4,7 @@ import { db } from '../lib/db';
 import { ADHKAR_COLLECTIONS, type AdhkarCollection } from '../lib/adhkar';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sun, Moon, Hand, Bed, Sparkles, ChevronRight, Check, X, Languages } from 'lucide-react';
+import { Sun, Moon, Hand, Bed, Sparkles, ChevronRight, Check, X, Languages, ChevronUp, ChevronDown } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useSearchParams } from 'react-router-dom';
 
@@ -41,6 +41,7 @@ export function Collections() {
   const [itemCount, setItemCount] = useState(0);
   const [showTranslation, setShowTranslation] = useState(true);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [showAdhkarList, setShowAdhkarList] = useState(true);
   
   const todayStr = format(new Date(), 'yyyy-MM-dd');
 
@@ -276,28 +277,43 @@ export function Collections() {
               </button>
             </div>
 
-            {/* Dhikr Progress Pills */}
-            <div className="flex items-center gap-1.5 flex-wrap justify-center max-w-[90vw]">
-              {selectedCollection.items.map((item, idx) => {
-                const itemProgress = getProgress(selectedCollection.id, idx);
-                const isCompleted = itemProgress >= item.target;
-                const isActive = activeItemIndex === idx;
-                
-                return (
-                  <div
-                    key={idx}
-                    className={cn(
-                      "flex items-center gap-1 px-2 py-1 rounded-full text-[10px] transition-all",
-                      isActive && "bg-gold-500/20 text-gold-400 border border-gold-500/30",
-                      !isActive && isCompleted && "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
-                      !isActive && !isCompleted && "bg-slate-800/30 text-slate-500 border border-white/5"
-                    )}
-                  >
-                    {isCompleted && <Check size={10} />}
-                    <span>{item.title.substring(0, 10)}{item.title.length > 10 ? '...' : ''}</span>
-                  </div>
-                );
-              })}
+            {/* Toggle and Dhikr Progress Pills */}
+            <div className="flex flex-col items-center gap-2">
+              <button
+                onClick={() => setShowAdhkarList(!showAdhkarList)}
+                className="flex items-center gap-1 text-[10px] text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                {showAdhkarList ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                <span>{showAdhkarList ? 'Hide' : 'Show'} adhkar list</span>
+              </button>
+              {showAdhkarList && (
+                <div className="flex items-center gap-1.5 flex-wrap justify-center max-w-[90vw]">
+                  {selectedCollection.items.map((item, idx) => {
+                    const itemProgress = getProgress(selectedCollection.id, idx);
+                    const isCompleted = itemProgress >= item.target;
+                    const isActive = activeItemIndex === idx;
+                    
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setActiveItemIndex(idx);
+                          setItemCount(itemProgress);
+                        }}
+                        className={cn(
+                          "flex items-center gap-1 px-2 py-1 rounded-full text-[10px] transition-all",
+                          isActive && "bg-gold-500/20 text-gold-400 border border-gold-500/30",
+                          !isActive && isCompleted && "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+                          !isActive && !isCompleted && "bg-slate-800/30 text-slate-500 border border-white/5 hover:bg-slate-800/50"
+                        )}
+                      >
+                        {isCompleted && <Check size={10} />}
+                        <span>{item.title.substring(0, 10)}{item.title.length > 10 ? '...' : ''}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </motion.div>
         ) : (
