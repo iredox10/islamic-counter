@@ -687,8 +687,16 @@ export function Counter() {
           </div>
         )}
 
+        {/* Reset Button */}
+        <button 
+           onClick={handleResetSession}
+           className="flex items-center gap-2 px-6 py-2 rounded-full text-slate-500 hover:text-white hover:bg-slate-800/50 transition-all text-xs tracking-widest uppercase mt-4"
+        >
+           <RotateCcw size={14} /> Reset
+        </button>
+
         {/* Daily Prayer Tracker - Bottom */}
-        <div className="mt-6 mb-4">
+        <div className="mt-4">
           <DailyPrayerTracker 
             todayStr={todayStr}
             onSelectPrayer={(prayer) => {
@@ -795,16 +803,6 @@ export function Counter() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Reset */}
-        <div className="absolute bottom-32">
-          <button 
-             onClick={handleResetSession}
-             className="flex items-center gap-2 px-6 py-2 rounded-full text-slate-500 hover:text-white hover:bg-slate-800/50 transition-all text-xs tracking-widest uppercase"
-          >
-             <RotateCcw size={14} /> Reset
-          </button>
-        </div>
 
       </div>
     </div>
