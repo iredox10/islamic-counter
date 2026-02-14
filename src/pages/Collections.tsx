@@ -4,7 +4,7 @@ import { db } from '../lib/db';
 import { ADHKAR_COLLECTIONS, type AdhkarCollection } from '../lib/adhkar';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sun, Moon, Hand, Bed, Sparkles, ChevronRight, Check, X, Languages, Sunrise, Sunset, CloudSun, CloudMoon } from 'lucide-react';
+import { Sun, Moon, Hand, Bed, Sparkles, ChevronRight, Check, X, Languages } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useSearchParams } from 'react-router-dom';
 
@@ -14,11 +14,11 @@ const categoryIcons: Record<string, React.ComponentType<{ size?: number; classNa
   'post-prayer': Hand,
   'sleep': Bed,
   'general': Sparkles,
-  'fajr': Sunrise,
+  'fajr': Sun,
   'dhuhr': Sun,
-  'asr': CloudSun,
-  'maghrib': Sunset,
-  'isha': CloudMoon
+  'asr': Sun,
+  'maghrib': Moon,
+  'isha': Moon
 };
 
 const categoryColors: Record<string, string> = {
@@ -27,7 +27,7 @@ const categoryColors: Record<string, string> = {
   'post-prayer': 'text-emerald-400 bg-emerald-500/10',
   'sleep': 'text-purple-400 bg-purple-500/10',
   'general': 'text-gold-400 bg-gold-500/10',
-  'fajr': 'text-amber-300 bg-amber-500/10',
+  'fajr': 'text-amber-400 bg-amber-500/10',
   'dhuhr': 'text-yellow-400 bg-yellow-500/10',
   'asr': 'text-orange-400 bg-orange-500/10',
   'maghrib': 'text-rose-400 bg-rose-500/10',
@@ -40,6 +40,7 @@ export function Collections() {
   const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
   const [itemCount, setItemCount] = useState(0);
   const [showTranslation, setShowTranslation] = useState(true);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
   
   const todayStr = format(new Date(), 'yyyy-MM-dd');
 
@@ -84,6 +85,7 @@ export function Collections() {
   const handleIncrement = async () => {
     if (!selectedCollection || activeItemIndex === null) return;
     
+    const currentItem = selectedCollection.items[activeItemIndex];
     const newCount = itemCount + 1;
     setItemCount(newCount);
     
@@ -103,22 +105,26 @@ export function Collections() {
         dateStr: todayStr
       });
     }
+
+    // Auto-advance when target reached
+    if (newCount >= currentItem.target) {
+      if (activeItemIndex < selectedCollection.items.length - 1) {
+        // Move to next dhikr automatically
+        if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+        setActiveItemIndex(activeItemIndex + 1);
+        setItemCount(0);
+      } else {
+        // Last dhikr completed - show completion modal
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100, 50, 200]);
+        setShowCompletionModal(true);
+      }
+    }
   };
 
   const handleComplete = () => {
     setActiveItemIndex(null);
     setItemCount(0);
-  };
-
-  const handleNextItem = () => {
-    if (!selectedCollection || activeItemIndex === null) return;
-    
-    if (activeItemIndex < selectedCollection.items.length - 1) {
-      setActiveItemIndex(activeItemIndex + 1);
-      setItemCount(0);
-    } else {
-      handleComplete();
-    }
+    setShowCompletionModal(false);
   };
 
   return (
@@ -232,36 +238,67 @@ export function Collections() {
               )}
             </div>
 
-            <button
-              onClick={handleIncrement}
-              className="w-56 h-56 rounded-full bg-gradient-to-br from-midnight-800 to-midnight-950 shadow-[20px_20px_60px_#050812,-20px_-20px_60px_#1e293b] flex flex-col items-center justify-center border border-white/5 active:scale-[0.98] transition-all"
-            >
-              <span className="font-serif text-7xl text-gold-400 drop-shadow-2xl tabular-nums">
-                {itemCount}
-              </span>
-              <span className="text-slate-500 text-sm mt-2">
-                / {selectedCollection.items[activeItemIndex].target}
-              </span>
-            </button>
-
-            <div className="w-full max-w-xs">
-              <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-gold-600 to-gold-400 transition-all duration-300"
-                  style={{ width: `${Math.min(100, (itemCount / selectedCollection.items[activeItemIndex].target) * 100)}%` }}
-                />
+            {/* Counter with circular progress ring */}
+            <div className="relative">
+              {/* Progress Ring SVG */}
+              <div className="absolute inset-0 -m-4">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                  <circle 
+                    cx="50" cy="50" r="48" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    className="text-slate-800" 
+                    strokeWidth="2"
+                  />
+                  <circle 
+                    cx="50" cy="50" r="48" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    className="text-gold-500 transition-all duration-300 ease-out" 
+                    strokeWidth="2"
+                    strokeDasharray="301.59"
+                    strokeDashoffset={301.59 - (301.59 * Math.min(100, (itemCount / selectedCollection.items[activeItemIndex].target) * 100)) / 100}
+                    strokeLinecap="round"
+                  />
+                </svg>
               </div>
+
+              <button
+                onClick={handleIncrement}
+                className="w-56 h-56 rounded-full bg-gradient-to-br from-midnight-800 to-midnight-950 shadow-[20px_20px_60px_#050812,-20px_-20px_60px_#1e293b] flex flex-col items-center justify-center border border-white/5 active:scale-[0.98] transition-all"
+              >
+                <span className="font-serif text-7xl text-gold-400 drop-shadow-2xl tabular-nums">
+                  {itemCount}
+                </span>
+                <span className="text-slate-500 text-sm mt-2">
+                  / {selectedCollection.items[activeItemIndex].target}
+                </span>
+              </button>
             </div>
 
-            {itemCount >= selectedCollection.items[activeItemIndex].target && (
-              <button
-                onClick={handleNextItem}
-                className="flex items-center gap-2 bg-gold-500 text-midnight-950 px-6 py-3 rounded-xl font-bold hover:bg-gold-400 transition-colors"
-              >
-                <Check size={20} />
-                {activeItemIndex < selectedCollection.items.length - 1 ? 'Next Dhikr' : 'Complete'}
-              </button>
-            )}
+            {/* Dhikr Progress Pills */}
+            <div className="flex items-center gap-1.5 flex-wrap justify-center max-w-[90vw]">
+              {selectedCollection.items.map((item, idx) => {
+                const itemProgress = getProgress(selectedCollection.id, idx);
+                const isCompleted = itemProgress >= item.target;
+                const isActive = activeItemIndex === idx;
+                
+                return (
+                  <div
+                    key={idx}
+                    className={cn(
+                      "flex items-center gap-1 px-2 py-1 rounded-full text-[10px] transition-all",
+                      isActive && "bg-gold-500/20 text-gold-400 border border-gold-500/30",
+                      !isActive && isCompleted && "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+                      !isActive && !isCompleted && "bg-slate-800/30 text-slate-500 border border-white/5"
+                    )}
+                  >
+                    {isCompleted && <Check size={10} />}
+                    <span>{item.title.substring(0, 10)}{item.title.length > 10 ? '...' : ''}</span>
+                  </div>
+                );
+              })}
+            </div>
           </motion.div>
         ) : (
           <motion.div
@@ -358,6 +395,44 @@ export function Collections() {
                 );
               })}
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Completion Modal */}
+      <AnimatePresence>
+        {showCompletionModal && selectedCollection && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-midnight-900 border border-emerald-500/30 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center"
+            >
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                <Check size={32} className="text-emerald-400" />
+              </div>
+              <h3 className="font-serif text-2xl text-slate-100 mb-2">Alhamdulillah! 🎉</h3>
+              <p className="text-slate-400 mb-4">
+                You have completed all adhkar for <span className="text-gold-400 font-medium">{selectedCollection.title}</span>
+              </p>
+              <div className="bg-slate-800/50 rounded-xl p-3 mb-4">
+                <p className="text-sm text-slate-300">
+                  <span className="text-emerald-400 font-bold">{selectedCollection.items.length}</span> adhkar completed
+                </p>
+              </div>
+              <button
+                onClick={handleComplete}
+                className="w-full py-3 rounded-xl bg-gold-500 text-midnight-950 font-bold hover:bg-gold-400 transition-colors"
+              >
+                Done
+              </button>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
