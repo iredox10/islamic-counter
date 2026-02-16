@@ -4,6 +4,7 @@ import App from './App.tsx';
 import './index.css';
 
 import { registerSW } from 'virtual:pwa-register';
+import { startNotificationChecker } from './lib/reminders';
 
 if (navigator.storage && navigator.storage.persist) {
   navigator.storage.persist().then((persisted) => {
@@ -31,6 +32,8 @@ registerSW({
     }
   },
 });
+
+startNotificationChecker();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

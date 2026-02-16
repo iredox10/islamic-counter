@@ -3,16 +3,34 @@ import { Download, Upload, Trash2, CheckCircle2, Sun, Moon, Monitor, Bell, BellO
 import { useState, useEffect } from 'react';
 import { useTheme, type Theme } from '../lib/ThemeContext';
 import { cn } from '../lib/utils';
-import { getStoredReminders, saveReminders, updateReminder, type DailyReminder } from '../lib/reminders';
+import { getStoredReminders, saveReminders, updateReminder, scheduleReminderNotification, cancelReminderNotification, type DailyReminder } from '../lib/reminders';
+import { 
+  requestNotificationPermission, 
+  subscribeToPush, 
+  unsubscribeFromPush, 
+  isPushSupported, 
+  getNotificationPermission,
+  saveSubscriptionToBackend,
+  removeSubscriptionFromBackend 
+} from '../lib/pushNotifications';
 
 export function Settings() {
   const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [reminders, setReminders] = useState<DailyReminder[]>([]);
   const [autoReset, setAutoReset] = useState(() => localStorage.getItem('auto-reset') === 'true');
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
 
   useEffect(() => {
     setReminders(getStoredReminders());
+    setNotificationPermission(getNotificationPermission());
+    checkPushSubscription();
   }, []);
+
+  const checkPushSubscription = async () => {
+    const stored = localStorage.getItem('push-subscription');
+    setPushEnabled(!!stored);
+  };
 
   const handleToggleAutoReset = () => {
     const newValue = !autoReset;
@@ -20,22 +38,61 @@ export function Settings() {
     localStorage.setItem('auto-reset', String(newValue));
   };
 
-  const handleToggleReminder = (id: string) => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
+  const handleTogglePush = async () => {
+    if (pushEnabled) {
+      await removeSubscriptionFromBackend();
+      await unsubscribeFromPush();
+      setPushEnabled(false);
+    } else {
+      const permission = await requestNotificationPermission();
+      setNotificationPermission(permission);
+      
+      if (permission === 'granted') {
+        const subscription = await subscribeToPush();
+        if (subscription) {
+          const activeReminders = reminders.filter(r => r.enabled).map(r => ({
+            id: r.id,
+            name: r.name,
+            time: r.time,
+            enabled: r.enabled
+          }));
+          await saveSubscriptionToBackend(subscription, activeReminders);
+          setPushEnabled(true);
+        }
+      }
+    }
+  };
+
+  const handleToggleReminder = async (id: string) => {
+    const reminder = reminders.find(r => r.id === id);
+    const newEnabled = !reminder?.enabled;
+    
+    if (newEnabled && notificationPermission !== 'granted') {
+      const permission = await requestNotificationPermission();
+      setNotificationPermission(permission);
+      if (permission !== 'granted') return;
     }
     
-    const updated = updateReminder(reminders, id, { 
-      enabled: !reminders.find(r => r.id === id)?.enabled 
-    });
+    const updated = updateReminder(reminders, id, { enabled: newEnabled });
     setReminders(updated);
     saveReminders(updated);
+    
+    if (newEnabled) {
+      scheduleReminderNotification(updated.find(r => r.id === id)!);
+    } else {
+      cancelReminderNotification(id);
+    }
   };
 
   const handleTimeChange = (id: string, time: string) => {
     const updated = updateReminder(reminders, id, { time });
     setReminders(updated);
     saveReminders(updated);
+    
+    const reminder = updated.find(r => r.id === id);
+    if (reminder?.enabled) {
+      scheduleReminderNotification(reminder);
+    }
   };
 
   const handleExport = async () => {
@@ -179,6 +236,48 @@ export function Settings() {
             ))}
           </div>
         </section>
+
+        {/* Push Notifications Section */}
+        {isPushSupported() && (
+          <section className="space-y-4">
+            <h2 className="text-xs font-bold text-gold-500 uppercase tracking-widest">Push Notifications</h2>
+            
+            <div className="glass-panel p-4 rounded-xl">
+              <button 
+                onClick={handleTogglePush}
+                className="w-full flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "p-2 rounded-lg transition-colors",
+                    pushEnabled ? "bg-emerald-500/20 text-emerald-400" : "bg-slate-700/50 text-slate-500"
+                  )}>
+                    <Bell size={18} />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-medium text-slate-200">Push Notifications</p>
+                    <p className="text-[10px] text-slate-500">
+                      {notificationPermission === 'denied' 
+                        ? 'Blocked - Enable in browser settings'
+                        : pushEnabled 
+                          ? 'Notifications enabled'
+                          : 'Get reminders even when app is closed'}
+                    </p>
+                  </div>
+                </div>
+                <div className={cn(
+                  "w-10 h-6 rounded-full transition-colors relative",
+                  pushEnabled ? "bg-emerald-500" : "bg-slate-700"
+                )}>
+                  <div className={cn(
+                    "absolute top-1 w-4 h-4 rounded-full bg-white transition-all",
+                    pushEnabled ? "left-5" : "left-1"
+                  )} />
+                </div>
+              </button>
+            </div>
+          </section>
+        )}
 
         {/* Session Section */}
         <section className="space-y-4">

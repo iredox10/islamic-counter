@@ -86,3 +86,100 @@ export function saveReminders(reminders: DailyReminder[]): void {
 export function updateReminder(reminders: DailyReminder[], id: string, updates: Partial<DailyReminder>): DailyReminder[] {
   return reminders.map(r => r.id === id ? { ...r, ...updates } : r);
 }
+
+export function scheduleReminderNotification(reminder: DailyReminder): void {
+  if (!reminder.enabled) return;
+  
+  const now = new Date();
+  const [hours, minutes] = reminder.time.split(':').map(Number);
+  
+  const scheduledTime = new Date();
+  scheduledTime.setHours(hours, minutes, 0, 0);
+  
+  if (scheduledTime <= now) {
+    scheduledTime.setDate(scheduledTime.getDate() + 1);
+  }
+  
+  const scheduled = getScheduledNotifications();
+  const existingIndex = scheduled.findIndex(n => n.id === reminder.id);
+  
+  const notification = {
+    id: reminder.id,
+    title: `🕌 ${reminder.name}`,
+    body: reminder.message,
+    scheduledFor: scheduledTime.toISOString()
+  };
+  
+  if (existingIndex >= 0) {
+    scheduled[existingIndex] = notification;
+  } else {
+    scheduled.push(notification);
+  }
+  
+  localStorage.setItem('scheduled-notifications', JSON.stringify(scheduled));
+}
+
+export function getScheduledNotifications(): Array<{
+  id: string;
+  title: string;
+  body: string;
+  scheduledFor: string;
+}> {
+  return JSON.parse(localStorage.getItem('scheduled-notifications') || '[]');
+}
+
+export function cancelReminderNotification(reminderId: string): void {
+  const scheduled = getScheduledNotifications();
+  const filtered = scheduled.filter(n => n.id !== reminderId);
+  localStorage.setItem('scheduled-notifications', JSON.stringify(filtered));
+}
+
+export function scheduleAllEnabledReminders(): void {
+  const reminders = getStoredReminders();
+  reminders.filter(r => r.enabled).forEach(scheduleReminderNotification);
+}
+
+export function checkAndTriggerNotifications(): void {
+  if (!('serviceWorker' in navigator)) return;
+  if (Notification.permission !== 'granted') return;
+  
+  const scheduled = getScheduledNotifications();
+  const now = new Date();
+  
+  const due = scheduled.filter(n => new Date(n.scheduledFor) <= now);
+  const upcoming = scheduled.filter(n => new Date(n.scheduledFor) > now);
+  
+  due.forEach(notification => {
+    navigator.serviceWorker.ready.then(registration => {
+      registration.showNotification(notification.title, {
+        body: notification.body,
+        icon: '/pwa-192x192.png',
+        badge: '/pwa-192x192.png',
+        tag: notification.id,
+        data: { url: '/' }
+      });
+    });
+    
+    const reminder = getStoredReminders().find(r => r.id === notification.id);
+    if (reminder) {
+      const nextTime = new Date(notification.scheduledFor);
+      nextTime.setDate(nextTime.getDate() + 1);
+      
+      upcoming.push({
+        ...notification,
+        scheduledFor: nextTime.toISOString()
+      });
+    }
+  });
+  
+  localStorage.setItem('scheduled-notifications', JSON.stringify(upcoming));
+}
+
+export function startNotificationChecker(): () => void {
+  checkAndTriggerNotifications();
+  scheduleAllEnabledReminders();
+  
+  const interval = setInterval(checkAndTriggerNotifications, 60000);
+  
+  return () => clearInterval(interval);
+}

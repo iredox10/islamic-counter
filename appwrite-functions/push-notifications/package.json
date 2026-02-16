@@ -1,0 +1,10 @@
+{
+  "name": "push-notifications",
+  "version": "1.0.0",
+  "description": "Push notifications function for Appwrite",
+  "main": "src/main.js",
+  "dependencies": {
+    "node-appwrite": "^11.0.0",
+    "web-push": "^3.6.7"
+  }
+}
