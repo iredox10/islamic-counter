@@ -296,6 +296,24 @@ export function Settings() {
                   </div>
                 </button>
               )}
+              
+              {notificationPermission === 'granted' && !pushEnabled && (
+                <button
+                  onClick={async () => {
+                    const success = await sendTestNotification();
+                    if (!success) {
+                      alert('Failed to send test notification.');
+                    }
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg bg-slate-800/50 hover:bg-slate-800 border border-white/5 transition-colors"
+                >
+                  <Send size={18} className="text-slate-400" />
+                  <div className="text-left">
+                    <p className="text-sm font-medium text-slate-300">Send Test Notification</p>
+                    <p className="text-[10px] text-slate-500">Verify local notifications work</p>
+                  </div>
+                </button>
+              )}
             </div>
           </section>
         )}
