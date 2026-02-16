@@ -320,98 +320,96 @@ export function Settings() {
         )}
 
         {/* Notification Sound Section */}
-        {isPushSupported() && (
-          <section className="space-y-4">
-            <h2 className="text-xs font-bold text-gold-500 uppercase tracking-widest">Notification Sound</h2>
-            
-            <div className="glass-panel p-4 rounded-xl space-y-2">
-              {SOUND_OPTIONS.filter(s => s.id !== 'custom' || hasCustomSound).map((sound) => (
-                <button
-                  key={sound.id}
-                  onClick={() => {
-                    setSelectedSoundState(sound.id);
-                    setSelectedSound(sound.id);
-                    if (sound.id !== 'none') {
-                      playNotificationSound(sound.id);
-                    }
-                  }}
-                  className={cn(
-                    "w-full flex items-center justify-between p-3 rounded-lg transition-colors",
-                    selectedSound === sound.id 
-                      ? "bg-gold-500/10 border border-gold-500/30" 
-                      : "bg-slate-800/30 border border-transparent hover:bg-slate-800/50"
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <Volume2 size={18} className={selectedSound === sound.id ? "text-gold-400" : "text-slate-500"} />
-                    <div className="text-left">
-                      <p className={cn("text-sm font-medium", selectedSound === sound.id ? "text-gold-400" : "text-slate-300")}>
-                        {sound.name}
-                      </p>
-                      <p className="text-[10px] text-slate-500">{sound.description}</p>
-                    </div>
+        <section className="space-y-4">
+          <h2 className="text-xs font-bold text-gold-500 uppercase tracking-widest">Notification Sound</h2>
+          
+          <div className="glass-panel p-4 rounded-xl space-y-2">
+            {SOUND_OPTIONS.filter(s => s.id !== 'custom' || hasCustomSound).map((sound) => (
+              <button
+                key={sound.id}
+                onClick={() => {
+                  setSelectedSoundState(sound.id);
+                  setSelectedSound(sound.id);
+                  if (sound.id !== 'none') {
+                    playNotificationSound(sound.id);
+                  }
+                }}
+                className={cn(
+                  "w-full flex items-center justify-between p-3 rounded-lg transition-colors",
+                  selectedSound === sound.id 
+                    ? "bg-gold-500/10 border border-gold-500/30" 
+                    : "bg-slate-800/30 border border-transparent hover:bg-slate-800/50"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <Volume2 size={18} className={selectedSound === sound.id ? "text-gold-400" : "text-slate-500"} />
+                  <div className="text-left">
+                    <p className={cn("text-sm font-medium", selectedSound === sound.id ? "text-gold-400" : "text-slate-300")}>
+                      {sound.name}
+                    </p>
+                    <p className="text-[10px] text-slate-500">{sound.description}</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {sound.id === 'custom' && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          clearCustomSound();
-                          setHasCustomSound(false);
-                          if (selectedSound === 'custom') {
-                            setSelectedSoundState('default');
-                            setSelectedSound('default');
-                          }
-                        }}
-                        className="p-1 rounded hover:bg-red-500/20 text-red-400"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    )}
-                    {selectedSound === sound.id && (
-                      <CheckCircle2 size={16} className="text-gold-400" />
-                    )}
-                  </div>
-                </button>
-              ))}
-              
-              {/* Upload Custom Sound */}
-              <div className="pt-2 border-t border-white/5">
-                <div className="relative">
-                  <input 
-                    type="file" 
-                    accept="audio/*"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        try {
-                          await saveCustomSound(file);
-                          setHasCustomSound(true);
-                          setSelectedSoundState('custom');
-                          setSelectedSound('custom');
-                          playNotificationSound('custom');
-                        } catch {
-                          alert('Failed to save audio file. Please try a smaller file.');
+                </div>
+                <div className="flex items-center gap-2">
+                  {sound.id === 'custom' && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        clearCustomSound();
+                        setHasCustomSound(false);
+                        if (selectedSound === 'custom') {
+                          setSelectedSoundState('default');
+                          setSelectedSound('default');
                         }
+                      }}
+                      className="p-1 rounded hover:bg-red-500/20 text-red-400"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                  {selectedSound === sound.id && (
+                    <CheckCircle2 size={16} className="text-gold-400" />
+                  )}
+                </div>
+              </button>
+            ))}
+            
+            {/* Upload Custom Sound */}
+            <div className="pt-2 border-t border-white/5">
+              <div className="relative">
+                <input 
+                  type="file" 
+                  accept="audio/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      try {
+                        await saveCustomSound(file);
+                        setHasCustomSound(true);
+                        setSelectedSoundState('custom');
+                        setSelectedSound('custom');
+                        playNotificationSound('custom');
+                      } catch {
+                        alert('Failed to save audio file. Please try a smaller file.');
                       }
-                      e.target.value = '';
-                    }}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
-                  <div className="w-full flex items-center gap-3 p-3 rounded-lg bg-slate-800/30 hover:bg-slate-800/50 border border-dashed border-slate-600 transition-colors pointer-events-none">
-                    <Upload size={18} className="text-slate-500" />
-                    <div className="text-left">
-                      <p className="text-sm font-medium text-slate-300">
-                        {hasCustomSound ? 'Replace Custom Sound' : 'Upload Custom Sound'}
-                      </p>
-                      <p className="text-[10px] text-slate-500">MP3, WAV, OGG (max ~500KB)</p>
-                    </div>
+                    }
+                    e.target.value = '';
+                  }}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                />
+                <div className="w-full flex items-center gap-3 p-3 rounded-lg bg-slate-800/30 hover:bg-slate-800/50 border border-dashed border-slate-600 transition-colors">
+                  <Upload size={18} className="text-slate-500" />
+                  <div className="text-left">
+                    <p className="text-sm font-medium text-slate-300">
+                      {hasCustomSound ? 'Replace Custom Sound' : 'Upload Custom Sound'}
+                    </p>
+                    <p className="text-[10px] text-slate-500">MP3, WAV, OGG (max ~500KB)</p>
                   </div>
                 </div>
               </div>
             </div>
-          </section>
-        )}
+          </div>
+        </section>
 
         {/* Session Section */}
         <section className="space-y-4">
