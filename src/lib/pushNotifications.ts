@@ -275,12 +275,20 @@ export async function sendTestNotification(): Promise<boolean> {
       return false;
     }
     
+    // Vibrate on mobile devices
+    if (navigator.vibrate) {
+      navigator.vibrate([100, 50, 100, 50, 200]);
+    }
+    
     const registration = await navigator.serviceWorker.ready;
     
-    await registration.showNotification('Tasbih Test', {
+    await registration.showNotification(' Tasbih Test', {
       body: 'Test notification from Tasbih PWA',
       icon: '/pwa-192x192.png',
       badge: '/pwa-192x192.png',
+      tag: 'test-notification',
+      requireInteraction: true,
+      silent: false,
       data: { url: '/' }
     });
     

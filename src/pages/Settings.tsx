@@ -1,5 +1,5 @@
 import { db } from '../lib/db';
-import { Download, Upload, Trash2, CheckCircle2, Sun, Moon, Monitor, Bell, BellOff, Clock, RefreshCw, Shield, Send } from 'lucide-react';
+import { Download, Upload, Trash2, CheckCircle2, Sun, Moon, Monitor, Bell, BellOff, Clock, RefreshCw, Send } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTheme, type Theme } from '../lib/ThemeContext';
 import { cn } from '../lib/utils';
@@ -14,10 +14,8 @@ import {
   removeSubscriptionFromBackend,
   sendTestNotification
 } from '../lib/pushNotifications';
-import { useNavigate } from 'react-router-dom';
 
 export function Settings() {
-  const navigate = useNavigate();
   const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [reminders, setReminders] = useState<DailyReminder[]>([]);
   const [autoReset, setAutoReset] = useState(() => localStorage.getItem('auto-reset') === 'true');
@@ -404,23 +402,6 @@ export function Settings() {
               <div className="text-left">
                 <p className="text-sm font-bold">Reset App</p>
                 <p className="text-[10px] opacity-70">Delete all goals and history</p>
-              </div>
-            </button>
-          </div>
-        </section>
-
-        <section className="space-y-4">
-          <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Advanced</h2>
-          
-          <div className="glass-panel p-4 rounded-xl">
-            <button 
-              onClick={() => navigate('/admin')}
-              className="w-full flex items-center gap-3 p-3 rounded-lg bg-slate-800/50 hover:bg-slate-800 border border-white/5 transition-colors"
-            >
-              <Shield size={20} className="text-slate-400" />
-              <div className="text-left">
-                <p className="text-sm font-bold text-slate-200">Admin Dashboard</p>
-                <p className="text-[10px] text-slate-500">View app analytics</p>
               </div>
             </button>
           </div>
