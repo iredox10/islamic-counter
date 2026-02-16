@@ -12,6 +12,8 @@ export const databases = new Databases(appwriteClient);
 export const DATABASE_ID = 'tasbih';
 export const SUBSCRIPTIONS_COLLECTION = 'push_subscriptions';
 export const NOTIFICATION_LOGS_COLLECTION = 'notification_logs';
+export const ANALYTICS_SESSIONS_COLLECTION = 'analytics_sessions';
+export const ANALYTICS_EVENTS_COLLECTION = 'analytics_events';
 
 export const APPWRITE_CONFIG = {
   endpoint: APPWRITE_ENDPOINT,
