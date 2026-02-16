@@ -1,5 +1,5 @@
 import { db } from '../lib/db';
-import { Download, Upload, Trash2, CheckCircle2, Sun, Moon, Monitor, Bell, BellOff, Clock, RefreshCw, Shield } from 'lucide-react';
+import { Download, Upload, Trash2, CheckCircle2, Sun, Moon, Monitor, Bell, BellOff, Clock, RefreshCw, Shield, Send } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTheme, type Theme } from '../lib/ThemeContext';
 import { cn } from '../lib/utils';
@@ -11,7 +11,8 @@ import {
   isPushSupported, 
   getNotificationPermission,
   saveSubscriptionToBackend,
-  removeSubscriptionFromBackend 
+  removeSubscriptionFromBackend,
+  sendTestNotification
 } from '../lib/pushNotifications';
 import { useNavigate } from 'react-router-dom';
 
@@ -244,7 +245,7 @@ export function Settings() {
           <section className="space-y-4">
             <h2 className="text-xs font-bold text-gold-500 uppercase tracking-widest">Push Notifications</h2>
             
-            <div className="glass-panel p-4 rounded-xl">
+            <div className="glass-panel p-4 rounded-xl space-y-3">
               <button 
                 onClick={handleTogglePush}
                 className="w-full flex items-center justify-between"
@@ -277,6 +278,24 @@ export function Settings() {
                   )} />
                 </div>
               </button>
+              
+              {pushEnabled && (
+                <button
+                  onClick={async () => {
+                    const success = await sendTestNotification();
+                    if (!success) {
+                      alert('Failed to send test notification. Make sure notifications are allowed.');
+                    }
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/20 transition-colors"
+                >
+                  <Send size={18} className="text-gold-400" />
+                  <div className="text-left">
+                    <p className="text-sm font-medium text-gold-400">Send Test Notification</p>
+                    <p className="text-[10px] text-slate-500">Verify notifications are working</p>
+                  </div>
+                </button>
+              )}
             </div>
           </section>
         )}

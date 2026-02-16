@@ -262,3 +262,31 @@ export async function removeSubscriptionFromBackend(): Promise<boolean> {
     return false;
   }
 }
+
+export async function sendTestNotification(): Promise<boolean> {
+  try {
+    if (!('serviceWorker' in navigator)) {
+      console.warn('Service workers not supported');
+      return false;
+    }
+    
+    if (Notification.permission !== 'granted') {
+      console.warn('Notification permission not granted');
+      return false;
+    }
+    
+    const registration = await navigator.serviceWorker.ready;
+    
+    await registration.showNotification('Tasbih Test', {
+      body: 'Test notification from Tasbih PWA',
+      icon: '/pwa-192x192.png',
+      badge: '/pwa-192x192.png',
+      data: { url: '/' }
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Failed to send test notification:', error);
+    return false;
+  }
+}
