@@ -280,6 +280,10 @@ export async function sendTestNotification(): Promise<boolean> {
       navigator.vibrate([100, 50, 100, 50, 200]);
     }
     
+    // Play selected sound
+    const { playNotificationSound } = await import('./sounds');
+    playNotificationSound();
+    
     const registration = await navigator.serviceWorker.ready;
     
     await registration.showNotification(' Tasbih Test', {
@@ -288,7 +292,7 @@ export async function sendTestNotification(): Promise<boolean> {
       badge: '/pwa-192x192.png',
       tag: 'test-notification',
       requireInteraction: true,
-      silent: false,
+      silent: true,
       data: { url: '/' }
     });
     

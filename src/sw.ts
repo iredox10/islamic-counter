@@ -55,11 +55,12 @@ self.addEventListener('push', (event: PushEvent) => {
     badge: '/pwa-192x192.png',
     tag: data.tag || 'tasbih-notification',
     requireInteraction: true,
-    silent: false,
+    silent: true,
     data: {
       url: data.url || '/',
       dateOfArrival: Date.now(),
-      primaryKey: data.primaryKey || 1
+      primaryKey: data.primaryKey || 1,
+      sound: data.sound || 'default'
     }
   };
 

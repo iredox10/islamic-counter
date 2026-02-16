@@ -1,5 +1,5 @@
 import { db } from '../lib/db';
-import { Download, Upload, Trash2, CheckCircle2, Sun, Moon, Monitor, Bell, BellOff, Clock, RefreshCw, Send } from 'lucide-react';
+import { Download, Upload, Trash2, CheckCircle2, Sun, Moon, Monitor, Bell, BellOff, Clock, RefreshCw, Send, Volume2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTheme, type Theme } from '../lib/ThemeContext';
 import { cn } from '../lib/utils';
@@ -14,6 +14,7 @@ import {
   removeSubscriptionFromBackend,
   sendTestNotification
 } from '../lib/pushNotifications';
+import { getSelectedSound, setSelectedSound, playNotificationSound, SOUND_OPTIONS, type NotificationSound } from '../lib/sounds';
 
 export function Settings() {
   const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -21,6 +22,7 @@ export function Settings() {
   const [autoReset, setAutoReset] = useState(() => localStorage.getItem('auto-reset') === 'true');
   const [pushEnabled, setPushEnabled] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
+  const [selectedSound, setSelectedSoundState] = useState<NotificationSound>(() => getSelectedSound());
 
   useEffect(() => {
     setReminders(getStoredReminders());
@@ -312,6 +314,47 @@ export function Settings() {
                   </div>
                 </button>
               )}
+            </div>
+          </section>
+        )}
+
+        {/* Notification Sound Section */}
+        {isPushSupported() && (
+          <section className="space-y-4">
+            <h2 className="text-xs font-bold text-gold-500 uppercase tracking-widest">Notification Sound</h2>
+            
+            <div className="glass-panel p-4 rounded-xl space-y-2">
+              {SOUND_OPTIONS.map((sound) => (
+                <button
+                  key={sound.id}
+                  onClick={() => {
+                    setSelectedSoundState(sound.id);
+                    setSelectedSound(sound.id);
+                    if (sound.id !== 'none') {
+                      playNotificationSound(sound.id);
+                    }
+                  }}
+                  className={cn(
+                    "w-full flex items-center justify-between p-3 rounded-lg transition-colors",
+                    selectedSound === sound.id 
+                      ? "bg-gold-500/10 border border-gold-500/30" 
+                      : "bg-slate-800/30 border border-transparent hover:bg-slate-800/50"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <Volume2 size={18} className={selectedSound === sound.id ? "text-gold-400" : "text-slate-500"} />
+                    <div className="text-left">
+                      <p className={cn("text-sm font-medium", selectedSound === sound.id ? "text-gold-400" : "text-slate-300")}>
+                        {sound.name}
+                      </p>
+                      <p className="text-[10px] text-slate-500">{sound.description}</p>
+                    </div>
+                  </div>
+                  {selectedSound === sound.id && (
+                    <CheckCircle2 size={16} className="text-gold-400" />
+                  )}
+                </button>
+              ))}
             </div>
           </section>
         )}
