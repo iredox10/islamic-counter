@@ -1,6 +1,7 @@
-export type NotificationSound = 'default' | 'gentle' | 'bell' | 'chime' | 'none';
+export type NotificationSound = 'default' | 'gentle' | 'bell' | 'chime' | 'none' | 'custom';
 
 const SOUND_STORAGE_KEY = 'tasbih-notification-sound';
+const CUSTOM_SOUND_KEY = 'tasbih-custom-sound';
 
 export function getSelectedSound(): NotificationSound {
   return (localStorage.getItem(SOUND_STORAGE_KEY) as NotificationSound) || 'default';
@@ -10,8 +11,41 @@ export function setSelectedSound(sound: NotificationSound): void {
   localStorage.setItem(SOUND_STORAGE_KEY, sound);
 }
 
+export function saveCustomSound(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      try {
+        localStorage.setItem(CUSTOM_SOUND_KEY, result);
+        resolve(result);
+      } catch {
+        reject(new Error('File too large. Please choose a smaller audio file.'));
+      }
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+export function getCustomSound(): string | null {
+  return localStorage.getItem(CUSTOM_SOUND_KEY);
+}
+
+export function clearCustomSound(): void {
+  localStorage.removeItem(CUSTOM_SOUND_KEY);
+}
+
 export function playNotificationSound(sound: NotificationSound = getSelectedSound()): void {
   if (sound === 'none') return;
+  
+  if (sound === 'custom') {
+    const customSoundData = getCustomSound();
+    if (customSoundData) {
+      playCustomSound(customSoundData);
+      return;
+    }
+  }
   
   const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
   
@@ -29,6 +63,16 @@ export function playNotificationSound(sound: NotificationSound = getSelectedSoun
     default:
       playDefaultSound(audioContext);
       break;
+  }
+}
+
+function playCustomSound(dataUrl: string): void {
+  try {
+    const audio = new Audio(dataUrl);
+    audio.volume = 1.0;
+    audio.play().catch(console.error);
+  } catch (error) {
+    console.error('Failed to play custom sound:', error);
   }
 }
 
@@ -114,5 +158,6 @@ export const SOUND_OPTIONS: { id: NotificationSound; name: string; description: 
   { id: 'gentle', name: 'Gentle', description: 'Soft single tone' },
   { id: 'bell', name: 'Bell', description: 'Three-note chime' },
   { id: 'chime', name: 'Chime', description: 'Ascending melody' },
+  { id: 'custom', name: 'Custom', description: 'Your own audio file' },
   { id: 'none', name: 'None', description: 'Silent notification' }
 ];

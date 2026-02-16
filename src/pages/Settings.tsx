@@ -14,7 +14,7 @@ import {
   removeSubscriptionFromBackend,
   sendTestNotification
 } from '../lib/pushNotifications';
-import { getSelectedSound, setSelectedSound, playNotificationSound, SOUND_OPTIONS, type NotificationSound } from '../lib/sounds';
+import { getSelectedSound, setSelectedSound, playNotificationSound, SOUND_OPTIONS, type NotificationSound, saveCustomSound, getCustomSound, clearCustomSound } from '../lib/sounds';
 
 export function Settings() {
   const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -23,6 +23,7 @@ export function Settings() {
   const [pushEnabled, setPushEnabled] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const [selectedSound, setSelectedSoundState] = useState<NotificationSound>(() => getSelectedSound());
+  const [hasCustomSound, setHasCustomSound] = useState(() => !!getCustomSound());
 
   useEffect(() => {
     setReminders(getStoredReminders());
@@ -324,7 +325,7 @@ export function Settings() {
             <h2 className="text-xs font-bold text-gold-500 uppercase tracking-widest">Notification Sound</h2>
             
             <div className="glass-panel p-4 rounded-xl space-y-2">
-              {SOUND_OPTIONS.map((sound) => (
+              {SOUND_OPTIONS.filter(s => s.id !== 'custom' || hasCustomSound).map((sound) => (
                 <button
                   key={sound.id}
                   onClick={() => {
@@ -350,11 +351,64 @@ export function Settings() {
                       <p className="text-[10px] text-slate-500">{sound.description}</p>
                     </div>
                   </div>
-                  {selectedSound === sound.id && (
-                    <CheckCircle2 size={16} className="text-gold-400" />
-                  )}
+                  <div className="flex items-center gap-2">
+                    {sound.id === 'custom' && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          clearCustomSound();
+                          setHasCustomSound(false);
+                          if (selectedSound === 'custom') {
+                            setSelectedSoundState('default');
+                            setSelectedSound('default');
+                          }
+                        }}
+                        className="p-1 rounded hover:bg-red-500/20 text-red-400"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                    {selectedSound === sound.id && (
+                      <CheckCircle2 size={16} className="text-gold-400" />
+                    )}
+                  </div>
                 </button>
               ))}
+              
+              {/* Upload Custom Sound */}
+              <div className="pt-2 border-t border-white/5">
+                <div className="relative">
+                  <input 
+                    type="file" 
+                    accept="audio/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        try {
+                          await saveCustomSound(file);
+                          setHasCustomSound(true);
+                          setSelectedSoundState('custom');
+                          setSelectedSound('custom');
+                          playNotificationSound('custom');
+                        } catch {
+                          alert('Failed to save audio file. Please try a smaller file.');
+                        }
+                      }
+                      e.target.value = '';
+                    }}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <div className="w-full flex items-center gap-3 p-3 rounded-lg bg-slate-800/30 hover:bg-slate-800/50 border border-dashed border-slate-600 transition-colors pointer-events-none">
+                    <Upload size={18} className="text-slate-500" />
+                    <div className="text-left">
+                      <p className="text-sm font-medium text-slate-300">
+                        {hasCustomSound ? 'Replace Custom Sound' : 'Upload Custom Sound'}
+                      </p>
+                      <p className="text-[10px] text-slate-500">MP3, WAV, OGG (max ~500KB)</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
         )}
