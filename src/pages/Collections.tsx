@@ -239,43 +239,45 @@ export function Collections() {
               )}
             </div>
 
-            {/* Counter with circular progress ring */}
-            <div className="relative">
+            {/* Full circle counter with integrated progress ring */}
+            <button
+              onClick={handleIncrement}
+              className="relative w-72 h-72 rounded-full active:scale-[0.98] transition-transform"
+            >
+              {/* Background circle */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-midnight-800 to-midnight-950 shadow-[20px_20px_60px_#050812,-20px_-20px_60px_#1e293b] border border-white/5" />
+              
               {/* Progress Ring SVG */}
-              <div className="absolute inset-0 -m-4">
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                  <circle 
-                    cx="50" cy="50" r="48" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    className="text-slate-800" 
-                    strokeWidth="2"
-                  />
-                  <circle 
-                    cx="50" cy="50" r="48" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    className="text-gold-500 transition-all duration-300 ease-out" 
-                    strokeWidth="2"
-                    strokeDasharray="301.59"
-                    strokeDashoffset={301.59 - (301.59 * Math.min(100, (itemCount / selectedCollection.items[activeItemIndex].target) * 100)) / 100}
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </div>
+              <svg className="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                <circle 
+                  cx="50" cy="50" r="47" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  className="text-slate-800/50" 
+                  strokeWidth="4"
+                />
+                <circle 
+                  cx="50" cy="50" r="47" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  className="text-gold-500 transition-all duration-300 ease-out" 
+                  strokeWidth="4"
+                  strokeDasharray="295.31"
+                  strokeDashoffset={295.31 - (295.31 * Math.min(100, (itemCount / selectedCollection.items[activeItemIndex].target) * 100)) / 100}
+                  strokeLinecap="round"
+                />
+              </svg>
 
-              <button
-                onClick={handleIncrement}
-                className="w-56 h-56 rounded-full bg-gradient-to-br from-midnight-800 to-midnight-950 shadow-[20px_20px_60px_#050812,-20px_-20px_60px_#1e293b] flex flex-col items-center justify-center border border-white/5 active:scale-[0.98] transition-all"
-              >
-                <span className="font-serif text-7xl text-gold-400 drop-shadow-2xl tabular-nums">
+              {/* Content */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="font-serif text-8xl text-gold-400 drop-shadow-2xl tabular-nums">
                   {itemCount}
                 </span>
-                <span className="text-slate-500 text-sm mt-2">
+                <span className="text-slate-400 text-base mt-2">
                   / {selectedCollection.items[activeItemIndex].target}
                 </span>
-              </button>
-            </div>
+              </div>
+            </button>
 
             {/* Toggle and Dhikr Progress Pills */}
             <div className="flex flex-col items-center gap-2">
