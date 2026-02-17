@@ -1,5 +1,5 @@
 import { db } from '../lib/db';
-import { Download, Upload, Trash2, CheckCircle2, Sun, Moon, Monitor, Bell, BellOff, Clock, RefreshCw, Send, Volume2 } from 'lucide-react';
+import { Download, Upload, Trash2, CheckCircle2, Sun, Moon, Monitor, Bell, BellOff, Clock, RefreshCw, Volume2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTheme, type Theme } from '../lib/ThemeContext';
 import { cn } from '../lib/utils';
@@ -11,8 +11,7 @@ import {
   isPushSupported, 
   getNotificationPermission,
   saveSubscriptionToBackend,
-  removeSubscriptionFromBackend,
-  sendTestNotification
+  removeSubscriptionFromBackend
 } from '../lib/pushNotifications';
 import { getSelectedSound, setSelectedSound, playNotificationSound, SOUND_OPTIONS, type NotificationSound, saveCustomSound, getCustomSound, clearCustomSound } from '../lib/sounds';
 
@@ -280,41 +279,7 @@ export function Settings() {
                 </div>
               </button>
               
-              {pushEnabled && (
-                <button
-                  onClick={async () => {
-                    const success = await sendTestNotification();
-                    if (!success) {
-                      alert('Failed to send test notification. Make sure notifications are allowed.');
-                    }
-                  }}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/20 transition-colors"
-                >
-                  <Send size={18} className="text-gold-400" />
-                  <div className="text-left">
-                    <p className="text-sm font-medium text-gold-400">Send Test Notification</p>
-                    <p className="text-[10px] text-slate-500">Verify notifications are working</p>
-                  </div>
-                </button>
-              )}
-              
-              {notificationPermission === 'granted' && !pushEnabled && (
-                <button
-                  onClick={async () => {
-                    const success = await sendTestNotification();
-                    if (!success) {
-                      alert('Failed to send test notification.');
-                    }
-                  }}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg bg-slate-800/50 hover:bg-slate-800 border border-white/5 transition-colors"
-                >
-                  <Send size={18} className="text-slate-400" />
-                  <div className="text-left">
-                    <p className="text-sm font-medium text-slate-300">Send Test Notification</p>
-                    <p className="text-[10px] text-slate-500">Verify local notifications work</p>
-                  </div>
-                </button>
-              )}
+
             </div>
           </section>
         )}
