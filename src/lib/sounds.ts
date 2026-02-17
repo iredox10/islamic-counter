@@ -170,8 +170,6 @@ export function playNotificationSound(sound: NotificationSound = getSelectedSoun
 }
 
 function vibrate(pattern: 'default' | 'gentle' | 'bell' | 'chime' | 'custom'): void {
-  if (!navigator.vibrate) return;
-  
   const patterns: Record<string, number[]> = {
     default: [100, 50, 100],
     gentle: [200],
@@ -180,7 +178,18 @@ function vibrate(pattern: 'default' | 'gentle' | 'bell' | 'chime' | 'custom'): v
     custom: [100, 50, 100, 50, 200]
   };
   
-  navigator.vibrate(patterns[pattern] || patterns.default);
+  const vibrationPattern = patterns[pattern] || patterns.default;
+  
+  if ('vibrate' in navigator) {
+    try {
+      const result = navigator.vibrate(vibrationPattern);
+      if (!result) {
+        console.warn('Vibration was not allowed');
+      }
+    } catch (error) {
+      console.error('Vibration error:', error);
+    }
+  }
 }
 
 function playCustomSound(dataUrl: string): void {
