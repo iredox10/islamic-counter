@@ -6,6 +6,7 @@ import './index.css';
 import { registerSW } from 'virtual:pwa-register';
 import { startNotificationChecker } from './lib/reminders';
 import { initAnalytics } from './lib/analytics';
+import { playNotificationSound } from './lib/sounds';
 
 if (navigator.storage && navigator.storage.persist) {
   navigator.storage.persist().then((persisted) => {
@@ -32,6 +33,15 @@ registerSW({
       }, 60 * 60 * 1000);
     }
   },
+});
+
+navigator.serviceWorker?.addEventListener('message', (event) => {
+  if (event.data?.type === 'PLAY_NOTIFICATION_SOUND') {
+    playNotificationSound();
+    if (navigator.vibrate) {
+      navigator.vibrate([100, 50, 100, 50, 200]);
+    }
+  }
 });
 
 startNotificationChecker();

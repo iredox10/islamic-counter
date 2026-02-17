@@ -150,12 +150,21 @@ export function checkAndTriggerNotifications(): void {
   const upcoming = scheduled.filter(n => new Date(n.scheduledFor) > now);
   
   due.forEach(notification => {
+    import('./sounds').then(({ playNotificationSound }) => {
+      playNotificationSound();
+    });
+    
+    if (navigator.vibrate) {
+      navigator.vibrate([100, 50, 100, 50, 200]);
+    }
+    
     navigator.serviceWorker.ready.then(registration => {
       registration.showNotification(notification.title, {
         body: notification.body,
         icon: '/pwa-192x192.png',
         badge: '/pwa-192x192.png',
         tag: notification.id,
+        silent: true,
         data: { url: '/' }
       });
     });

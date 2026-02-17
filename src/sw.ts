@@ -54,8 +54,8 @@ self.addEventListener('push', (event: PushEvent) => {
     icon: '/pwa-192x192.png',
     badge: '/pwa-192x192.png',
     tag: data.tag || 'tasbih-notification',
-    requireInteraction: true,
-    silent: true,
+    requireInteraction: false,
+    silent: false,
     data: {
       url: data.url || '/',
       dateOfArrival: Date.now(),
@@ -67,6 +67,16 @@ self.addEventListener('push', (event: PushEvent) => {
   event.waitUntil(
     self.registration.showNotification(data.title || 'Tasbih Reminder', options)
   );
+});
+
+self.addEventListener('notificationshow', () => {
+  self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+    clients.forEach((client) => {
+      client.postMessage({
+        type: 'PLAY_NOTIFICATION_SOUND'
+      });
+    });
+  });
 });
 
 self.addEventListener('notificationclick', (event: NotificationEvent) => {
