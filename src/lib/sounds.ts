@@ -2,7 +2,7 @@ export type NotificationSound = 'default' | 'gentle' | 'bell' | 'chime' | 'none'
 
 const SOUND_STORAGE_KEY = 'tasbih-notification-sound';
 const CUSTOM_SOUND_KEY = 'tasbih-custom-sound';
-const MAX_DURATION_SECONDS = 5;
+const MAX_DURATION_SECONDS = 30;
 
 export function getSelectedSound(): NotificationSound {
   return (localStorage.getItem(SOUND_STORAGE_KEY) as NotificationSound) || 'default';
@@ -171,21 +171,18 @@ export function playNotificationSound(sound: NotificationSound = getSelectedSoun
 
 function vibrate(pattern: 'default' | 'gentle' | 'bell' | 'chime' | 'custom'): void {
   const patterns: Record<string, number[]> = {
-    default: [100, 50, 100],
-    gentle: [200],
-    bell: [100, 50, 100, 50, 100],
-    chime: [60, 40, 60, 40, 60, 40, 100],
-    custom: [100, 50, 100, 50, 200]
+    default: [500, 200, 500, 200, 500, 200, 500, 200, 500],
+    gentle: [800, 400, 800, 400, 800],
+    bell: [300, 100, 300, 100, 300, 100, 300, 100, 300, 100, 300],
+    chime: [200, 80, 200, 80, 200, 80, 200, 80, 200, 80, 200],
+    custom: [500, 200, 500, 200, 500, 200, 500, 200, 500]
   };
   
   const vibrationPattern = patterns[pattern] || patterns.default;
   
   if ('vibrate' in navigator) {
     try {
-      const result = navigator.vibrate(vibrationPattern);
-      if (!result) {
-        console.warn('Vibration was not allowed');
-      }
+      navigator.vibrate(vibrationPattern);
     } catch (error) {
       console.error('Vibration error:', error);
     }
@@ -196,6 +193,7 @@ function playCustomSound(dataUrl: string): void {
   try {
     const audio = new Audio(dataUrl);
     audio.volume = 1.0;
+    audio.loop = false;
     audio.play().catch(console.error);
   } catch (error) {
     console.error('Failed to play custom sound:', error);
@@ -203,80 +201,102 @@ function playCustomSound(dataUrl: string): void {
 }
 
 function playDefaultSound(ctx: AudioContext): void {
-  const oscillator = ctx.createOscillator();
-  const gainNode = ctx.createGain();
+  const duration = 30;
+  const interval = 0.5;
+  const repeats = Math.floor(duration / interval);
   
-  oscillator.connect(gainNode);
-  gainNode.connect(ctx.destination);
-  
-  oscillator.type = 'sine';
-  oscillator.frequency.setValueAtTime(880, ctx.currentTime);
-  oscillator.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1);
-  
-  gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-  gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-  
-  oscillator.start(ctx.currentTime);
-  oscillator.stop(ctx.currentTime + 0.3);
+  for (let i = 0; i < repeats; i++) {
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(880, ctx.currentTime + i * interval);
+    oscillator.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + i * interval + 0.1);
+    
+    gainNode.gain.setValueAtTime(0.3, ctx.currentTime + i * interval);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * interval + 0.3);
+    
+    oscillator.start(ctx.currentTime + i * interval);
+    oscillator.stop(ctx.currentTime + i * interval + 0.3);
+  }
 }
 
 function playGentleSound(ctx: AudioContext): void {
-  const oscillator = ctx.createOscillator();
-  const gainNode = ctx.createGain();
+  const duration = 30;
+  const interval = 1;
+  const repeats = Math.floor(duration / interval);
   
-  oscillator.connect(gainNode);
-  gainNode.connect(ctx.destination);
-  
-  oscillator.type = 'sine';
-  oscillator.frequency.setValueAtTime(523, ctx.currentTime);
-  
-  gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
-  gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-  
-  oscillator.start(ctx.currentTime);
-  oscillator.stop(ctx.currentTime + 0.5);
+  for (let i = 0; i < repeats; i++) {
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(523, ctx.currentTime + i * interval);
+    
+    gainNode.gain.setValueAtTime(0.2, ctx.currentTime + i * interval);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * interval + 0.5);
+    
+    oscillator.start(ctx.currentTime + i * interval);
+    oscillator.stop(ctx.currentTime + i * interval + 0.5);
+  }
 }
 
 function playBellSound(ctx: AudioContext): void {
+  const duration = 30;
+  const interval = 1.5;
+  const repeats = Math.floor(duration / interval);
   const frequencies = [523, 659, 784];
   
-  frequencies.forEach((freq, i) => {
-    const oscillator = ctx.createOscillator();
-    const gainNode = ctx.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(ctx.destination);
-    
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.1);
-    
-    gainNode.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.1);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.1 + 0.4);
-    
-    oscillator.start(ctx.currentTime + i * 0.1);
-    oscillator.stop(ctx.currentTime + i * 0.1 + 0.4);
-  });
+  for (let r = 0; r < repeats; r++) {
+    frequencies.forEach((freq, i) => {
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(freq, ctx.currentTime + r * interval + i * 0.1);
+      
+      gainNode.gain.setValueAtTime(0.2, ctx.currentTime + r * interval + i * 0.1);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + r * interval + i * 0.1 + 0.4);
+      
+      oscillator.start(ctx.currentTime + r * interval + i * 0.1);
+      oscillator.stop(ctx.currentTime + r * interval + i * 0.1 + 0.4);
+    });
+  }
 }
 
 function playChimeSound(ctx: AudioContext): void {
+  const duration = 30;
+  const interval = 1.2;
+  const repeats = Math.floor(duration / interval);
   const notes = [659, 784, 880, 1047];
   
-  notes.forEach((freq, i) => {
-    const oscillator = ctx.createOscillator();
-    const gainNode = ctx.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(ctx.destination);
-    
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.08);
-    
-    gainNode.gain.setValueAtTime(0.15, ctx.currentTime + i * 0.08);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.08 + 0.3);
-    
-    oscillator.start(ctx.currentTime + i * 0.08);
-    oscillator.stop(ctx.currentTime + i * 0.08 + 0.3);
-  });
+  for (let r = 0; r < repeats; r++) {
+    notes.forEach((freq, i) => {
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(freq, ctx.currentTime + r * interval + i * 0.08);
+      
+      gainNode.gain.setValueAtTime(0.15, ctx.currentTime + r * interval + i * 0.08);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + r * interval + i * 0.08 + 0.3);
+      
+      oscillator.start(ctx.currentTime + r * interval + i * 0.08);
+      oscillator.stop(ctx.currentTime + r * interval + i * 0.08 + 0.3);
+    });
+  }
 }
 
 export const SOUND_OPTIONS: { id: NotificationSound; name: string; description: string }[] = [

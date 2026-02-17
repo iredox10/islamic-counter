@@ -403,7 +403,7 @@ export function Settings() {
                     <p className="text-sm font-medium text-slate-300">
                       {hasCustomSound ? 'Replace Custom Sound' : 'Upload Custom Sound'}
                     </p>
-                    <p className="text-[10px] text-slate-500">MP3, WAV, OGG (auto-trimmed to 5 seconds)</p>
+                    <p className="text-[10px] text-slate-500">MP3, WAV, OGG (auto-trimmed to 30 seconds)</p>
                   </div>
                 </div>
               </div>
