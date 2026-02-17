@@ -141,6 +141,7 @@ export function playNotificationSound(sound: NotificationSound = getSelectedSoun
     const customSoundData = getCustomSound();
     if (customSoundData) {
       playCustomSound(customSoundData);
+      vibrate('custom');
       return;
     }
   }
@@ -150,18 +151,36 @@ export function playNotificationSound(sound: NotificationSound = getSelectedSoun
   switch (sound) {
     case 'gentle':
       playGentleSound(audioContext);
+      vibrate('gentle');
       break;
     case 'bell':
       playBellSound(audioContext);
+      vibrate('bell');
       break;
     case 'chime':
       playChimeSound(audioContext);
+      vibrate('chime');
       break;
     case 'default':
     default:
       playDefaultSound(audioContext);
+      vibrate('default');
       break;
   }
+}
+
+function vibrate(pattern: 'default' | 'gentle' | 'bell' | 'chime' | 'custom'): void {
+  if (!navigator.vibrate) return;
+  
+  const patterns: Record<string, number[]> = {
+    default: [100, 50, 100],
+    gentle: [200],
+    bell: [100, 50, 100, 50, 100],
+    chime: [60, 40, 60, 40, 60, 40, 100],
+    custom: [100, 50, 100, 50, 200]
+  };
+  
+  navigator.vibrate(patterns[pattern] || patterns.default);
 }
 
 function playCustomSound(dataUrl: string): void {
