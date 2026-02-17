@@ -467,8 +467,9 @@ export function Settings() {
           </div>
         </section>
         
-        <div className="text-center pt-8">
+        <div className="text-center pt-8 space-y-1">
            <p className="text-xs text-slate-600">Tasbih PWA v1.0.0</p>
+           <p className="text-xs text-slate-600">Developed by <a href="https://iredox.tech" target="_blank" rel="noopener noreferrer" className="text-gold-500 hover:text-gold-400 transition-colors">iredox.tech</a></p>
         </div>
       </div>
     </div>
