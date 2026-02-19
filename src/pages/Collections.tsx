@@ -4,9 +4,18 @@ import { db } from '../lib/db';
 import { ADHKAR_COLLECTIONS, type AdhkarCollection } from '../lib/adhkar';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sun, Moon, Hand, Bed, Sparkles, ChevronRight, Check, X, Languages, ChevronUp, ChevronDown } from 'lucide-react';
+import { Sun, Moon, Hand, Bed, Sparkles, ChevronRight, Check, X, Languages, ChevronUp, ChevronDown, Flame, Timer, History } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { 
+  startAdhkarSession, 
+  recordDhikrCompletion, 
+  endAdhkarSession, 
+  cancelAdhkarSession,
+  getStreak,
+  getCurrentSession
+} from '../lib/adhkarTracking';
+import type { AdhkarStreak } from '../lib/db';
 
 const categoryIcons: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   'morning': Sun,
@@ -35,6 +44,7 @@ const categoryColors: Record<string, string> = {
 };
 
 export function Collections() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCollection, setSelectedCollection] = useState<AdhkarCollection | null>(null);
   const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
@@ -42,6 +52,9 @@ export function Collections() {
   const [showTranslation, setShowTranslation] = useState(true);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [showAdhkarList, setShowAdhkarList] = useState(true);
+  const [sessionStarted, setSessionStarted] = useState(false);
+  const [streak, setStreak] = useState<AdhkarStreak | null>(null);
+  const [sessionDuration, setSessionDuration] = useState(0);
   
   const todayStr = format(new Date(), 'yyyy-MM-dd');
 
@@ -79,6 +92,27 @@ export function Collections() {
   const handleStartItem = async (collection: AdhkarCollection, itemIndex: number) => {
     const currentProgress = getProgress(collection.id, itemIndex);
     
+    if (!sessionStarted) {
+      startAdhkarSession({
+        collectionId: collection.id,
+        collectionName: collection.title,
+        totalItems: collection.items.length
+      });
+      setSessionStarted(true);
+      
+      const existingStreak = await getStreak(collection.id);
+      setStreak(existingStreak || null);
+      
+      const startTime = Date.now();
+      const durationInterval = setInterval(() => {
+        if (getCurrentSession()) {
+          setSessionDuration(Math.floor((Date.now() - startTime) / 1000));
+        } else {
+          clearInterval(durationInterval);
+        }
+      }, 1000);
+    }
+    
     setActiveItemIndex(itemIndex);
     setItemCount(currentProgress);
   };
@@ -107,25 +141,55 @@ export function Collections() {
       });
     }
 
-    // Auto-advance when target reached
     if (newCount >= currentItem.target) {
+      recordDhikrCompletion(
+        currentItem.title,
+        currentItem.arabic,
+        newCount,
+        currentItem.target
+      );
+      
       if (activeItemIndex < selectedCollection.items.length - 1) {
-        // Move to next dhikr automatically
         if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
         setActiveItemIndex(activeItemIndex + 1);
         setItemCount(0);
       } else {
-        // Last dhikr completed - show completion modal
         if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100, 50, 200]);
         setShowCompletionModal(true);
       }
     }
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
+    if (sessionStarted) {
+      await endAdhkarSession(true);
+      setSessionStarted(false);
+      setSessionDuration(0);
+    }
     setActiveItemIndex(null);
     setItemCount(0);
     setShowCompletionModal(false);
+  };
+  
+  const handleCancel = async () => {
+    if (sessionStarted) {
+      cancelAdhkarSession();
+      setSessionStarted(false);
+      setSessionDuration(0);
+    }
+    setActiveItemIndex(null);
+    setItemCount(0);
+  };
+  
+  const handleBack = () => {
+    setSelectedCollection(null);
+    setStreak(null);
+  };
+  
+  const formatDuration = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
   };
 
   return (
@@ -197,7 +261,7 @@ export function Collections() {
             className="flex flex-col items-center justify-center min-h-[70vh] space-y-6"
           >
             <button 
-              onClick={handleComplete}
+              onClick={handleCancel}
               className="absolute top-4 right-4 p-2 rounded-full bg-slate-800/50 text-slate-400 hover:text-white"
             >
               <X size={20} />
@@ -212,6 +276,20 @@ export function Collections() {
             >
               <Languages size={20} />
             </button>
+            
+            {sessionStarted && sessionDuration > 0 && (
+              <div className="absolute top-4 left-4 flex items-center gap-1 text-xs text-slate-500">
+                <Timer size={12} />
+                <span>{formatDuration(sessionDuration)}</span>
+              </div>
+            )}
+            
+            {streak && streak.currentStreak > 0 && (
+              <div className="absolute top-4 left-20 flex items-center gap-1 text-xs text-orange-400">
+                <Flame size={12} />
+                <span>{streak.currentStreak} day streak</span>
+              </div>
+            )}
 
             <div className="text-center space-y-2">
               <span className="text-[10px] uppercase tracking-wider text-gold-400 font-bold">
@@ -327,11 +405,19 @@ export function Collections() {
             className="space-y-4"
           >
             <button 
-              onClick={() => setSelectedCollection(null)}
+              onClick={handleBack}
               className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
             >
               <ChevronRight size={20} className="rotate-180" />
               Back
+            </button>
+            
+            <button
+              onClick={() => navigate('/history')}
+              className="flex items-center gap-2 text-gold-400 hover:text-gold-300 transition-colors text-sm"
+            >
+              <History size={16} />
+              View History
             </button>
 
             <div className="flex items-center justify-between">

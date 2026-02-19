@@ -6,6 +6,7 @@ import { Stats } from './pages/Stats';
 import { Settings } from './pages/Settings';
 import { Collections } from './pages/Collections';
 import { Admin } from './pages/Admin';
+import { AdhkarHistory } from './pages/AdhkarHistory';
 import { ThemeProvider } from './lib/ThemeContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
@@ -20,6 +21,7 @@ function App() {
               <Route path="/collections" element={<Collections />} />
               <Route path="/targets" element={<Targets />} />
               <Route path="/stats" element={<Stats />} />
+              <Route path="/history" element={<AdhkarHistory />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/admin" element={<Admin />} />
             </Route>

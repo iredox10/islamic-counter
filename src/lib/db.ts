@@ -58,6 +58,40 @@ interface PrayerCompletion {
   completedAdhkar: number;
 }
 
+interface AdhkarSession {
+  id?: number;
+  collectionId: string;
+  collectionName: string;
+  dateStr: string;
+  startedAt: Date;
+  completedAt?: Date;
+  durationSeconds: number;
+  totalItems: number;
+  completedItems: number;
+  totalCounts: number;
+}
+
+interface AdhkarStreak {
+  id?: number;
+  collectionId: string;
+  currentStreak: number;
+  longestStreak: number;
+  lastCompletedDate: string;
+}
+
+interface AdhkarJournal {
+  id?: number;
+  dateStr: string;
+  collectionId: string;
+  collectionName: string;
+  dhikrName: string;
+  dhikrArabic?: string;
+  count: number;
+  target: number;
+  completedAt: Date;
+  notes?: string;
+}
+
 const db = new Dexie('IslamicCounterDB') as Dexie & {
   logs: EntityTable<Log, 'id'>;
   targets: EntityTable<Target, 'id'>;
@@ -65,6 +99,9 @@ const db = new Dexie('IslamicCounterDB') as Dexie & {
   collectionProgress: EntityTable<CollectionProgress, 'id'>;
   achievements: EntityTable<UnlockedAchievement, 'id'>;
   prayerCompletions: EntityTable<PrayerCompletion, 'id'>;
+  adhkarSessions: EntityTable<AdhkarSession, 'id'>;
+  adhkarStreaks: EntityTable<AdhkarStreak, 'id'>;
+  adhkarJournal: EntityTable<AdhkarJournal, 'id'>;
 };
 
 db.version(1).stores({
@@ -96,5 +133,11 @@ db.version(7).stores({
   prayerCompletions: '++id, [prayer+dateStr], prayer, dateStr'
 });
 
-export type { Log, Target, Duration, CollectionProgress, UnlockedAchievement, PrayerCompletion };
+db.version(8).stores({
+  adhkarSessions: '++id, collectionId, dateStr, startedAt, completedAt',
+  adhkarStreaks: '++id, collectionId',
+  adhkarJournal: '++id, dateStr, collectionId, completedAt, [dateStr+collectionId]'
+});
+
+export type { Log, Target, Duration, CollectionProgress, UnlockedAchievement, PrayerCompletion, AdhkarSession, AdhkarStreak, AdhkarJournal };
 export { db };
