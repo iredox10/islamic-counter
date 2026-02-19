@@ -1,7 +1,7 @@
 import { clientsClaim } from 'workbox-core';
-import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
-import { registerRoute } from 'workbox-routing';
-import { CacheFirst } from 'workbox-strategies';
+import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from 'workbox-precaching';
+import { registerRoute, NavigationRoute } from 'workbox-routing';
+import { CacheFirst, NetworkFirst } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 
@@ -11,6 +11,10 @@ clientsClaim();
 cleanupOutdatedCaches();
 
 precacheAndRoute(self.__WB_MANIFEST);
+
+const handler = createHandlerBoundToURL('/index.html');
+const navigationRoute = new NavigationRoute(handler);
+registerRoute(navigationRoute);
 
 registerRoute(
   /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -39,6 +43,22 @@ registerRoute(
       }),
       new CacheableResponsePlugin({
         statuses: [0, 200]
+      })
+    ]
+  })
+);
+
+registerRoute(
+  ({ url }) => url.origin === self.location.origin,
+  new NetworkFirst({
+    cacheName: 'offline-fallback',
+    plugins: [
+      new CacheableResponsePlugin({
+        statuses: [0, 200]
+      }),
+      new ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 60 * 60 * 24 * 30
       })
     ]
   })

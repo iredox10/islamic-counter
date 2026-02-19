@@ -65,6 +65,8 @@ export function initAnalytics(): void {
 }
 
 async function trackSessionStart(sessionId: string, deviceId: string): Promise<void> {
+  if (!databases) return;
+  
   try {
     const sessionStart = parseInt(sessionStorage.getItem(SESSION_START_KEY) || Date.now().toString());
     
@@ -115,6 +117,8 @@ function startHeartbeat(sessionId: string): void {
 }
 
 async function updateSessionDuration(sessionId: string, duration: number): Promise<void> {
+  if (!databases) return;
+  
   try {
     await databases.updateDocument(
       DATABASE_ID,
@@ -164,7 +168,7 @@ function getPlatform(): string {
 }
 
 export async function trackEvent(event: AnalyticsEvent): Promise<void> {
-  if (!isAppwriteConfigured()) return;
+  if (!isAppwriteConfigured() || !databases) return;
   
   try {
     const deviceId = getDeviceId();

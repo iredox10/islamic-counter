@@ -61,6 +61,12 @@ export function Admin() {
 
   async function fetchGlobalAnalytics() {
     setIsLoading(true);
+    
+    if (!databases) {
+      setIsLoading(false);
+      return;
+    }
+    
     try {
       const daysAgo = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
       const startDate = subDays(new Date(), daysAgo);
